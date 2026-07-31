@@ -7,4 +7,4 @@ dist/
 .pgdata-dev-admin/
 .pgdata-test-user/
 .pgdata-test-admin/
-uploads/
+/uploads/

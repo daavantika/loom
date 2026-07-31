@@ -13,7 +13,7 @@ services:
   - type: web
     name: loom-backend
     runtime: node
-    plan: starter
+    plan: free
     region: singapore
     branch: main
     rootDir: backend
@@ -22,10 +22,6 @@ services:
     preDeployCommand: npm run migration:run
     healthCheckPath: /health
     autoDeployTrigger: commit
-    disk:
-      name: loom-uploads
-      mountPath: /opt/render/project/src/backend/uploads
-      sizeGB: 1
     envVars:
       - key: USER_DATABASE_URL
         fromDatabase:
@@ -38,4 +34,8 @@ services:
       - key: JWT_SECRET
         sync: false
       - key: PAYOUT_DETAILS_ENCRYPTION_KEY
+        sync: false
+      - key: FIREBASE_STORAGE_BUCKET
+        sync: false
+      - key: FIREBASE_SERVICE_ACCOUNT_B64
         sync: false
