@@ -1,11 +1,13 @@
 // One-off local convenience: creates an ADMIN user directly in the admin DB,
 // since there is no public admin-registration endpoint (admins are
-// provisioned out of band, never self-registered).
+// provisioned out of band, never self-registered). On hosts with no Shell
+// access (e.g. Render's free tier), use SEED_ADMIN_EMAIL/SEED_ADMIN_PASSWORD
+// instead — see main.ts's seedAdminIfConfigured().
 // Usage: ts-node scripts/seed-admin.ts <email> <password>
 import 'reflect-metadata';
 import * as dotenv from 'dotenv';
-import * as bcrypt from 'bcrypt';
 import { AdminDataSource } from '../src/admin-db/data-source';
+import { upsertAdmin } from '../src/admin-db/seed-admin.util';
 
 dotenv.config();
 
@@ -17,12 +19,7 @@ async function main() {
   }
 
   await AdminDataSource.initialize();
-  const passwordHash = await bcrypt.hash(password, 12);
-  await AdminDataSource.query(
-    `INSERT INTO admin_users (email, password_hash, role) VALUES ($1, $2, 'ADMIN')
-     ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash`,
-    [email, passwordHash],
-  );
+  await upsertAdmin(AdminDataSource, email, password);
   console.log(`Admin user ready: ${email}`);
   await AdminDataSource.destroy();
 }

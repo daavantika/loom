@@ -19,7 +19,9 @@ services:
     rootDir: backend
     buildCommand: npm ci && npm run build
     startCommand: node dist/main.js
-    preDeployCommand: npm run migration:run
+    # No preDeployCommand — it's a paid-plan-only Blueprint field (confirmed
+    # against Render's docs), unavailable on the free plan used here.
+    # Migrations run automatically at app boot instead (see main.ts).
     healthCheckPath: /health
     autoDeployTrigger: commit
     envVars:
@@ -40,4 +42,12 @@ services:
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
       - key: SUPABASE_STORAGE_BUCKET
+        sync: false
+      # Optional — Shell access (needed to run scripts/seed-admin.ts
+      # manually) is also paid-only on Render, so set these to have the app
+      # seed/update one admin account at boot instead. Leave both unset
+      # after the account exists; safe to leave set too (idempotent upsert).
+      - key: SEED_ADMIN_EMAIL
+        sync: false
+      - key: SEED_ADMIN_PASSWORD
         sync: false
