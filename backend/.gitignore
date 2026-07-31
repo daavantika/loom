@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env
+*.tsbuildinfo
+*.log
+.pgdata-dev-user/
+.pgdata-dev-admin/
+.pgdata-test-user/
+.pgdata-test-admin/
+uploads/

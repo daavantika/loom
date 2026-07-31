@@ -1,0 +1,17 @@
+# OS
+.DS_Store
+
+# Editors
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+# Dependencies / build output (each package's own .gitignore covers these
+# too, but a root net catches anything at the top level)
+node_modules/
+dist/
+
+# Leftover scratch artifacts from earlier prototyping — not part of the
+# active project (frontend/ is canonical); excluded rather than deleted.
+outputs/
+work/

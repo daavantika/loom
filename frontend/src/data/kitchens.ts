@@ -1,0 +1,70 @@
+import type { Kitchen } from './types';
+
+export const foodImages = {
+  lemonRice: 'https://images.unsplash.com/photo-1630409351217-bc4fa6422075?auto=format&fit=crop&w=500&q=82',
+  thali: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=500&q=82',
+  idli: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&w=500&q=82',
+  biryani: 'https://images.unsplash.com/photo-1631515242808-497c3fbd3972?auto=format&fit=crop&w=500&q=82',
+  sweets: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=500&q=82',
+  dosa: 'https://images.unsplash.com/photo-1668236543090-82eba5ee5976?auto=format&fit=crop&w=500&q=82',
+  cook1: 'https://images.unsplash.com/photo-1583394293214-28ded15ee548?auto=format&fit=crop&w=500&q=82',
+  cook2: 'https://images.unsplash.com/photo-1583394293214-28ded15ee548?auto=format&fit=crop&w=500&q=82&sat=-30',
+  cook3: 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&w=500&q=82',
+  kitchen: 'https://images.unsplash.com/photo-1556911220-bff31c812dba?auto=format&fit=crop&w=800&q=82',
+  story: 'https://images.unsplash.com/photo-1601050690117-94f5f6fa8bd7?auto=format&fit=crop&w=500&q=82',
+} as const;
+
+export const baseKitchens: Kitchen[] = [
+  {
+    id: 'meera',
+    name: "Meera's Kitchen",
+    cook: 'Meera Krishnan',
+    cuisine: 'Tamil home-style · Veg',
+    rating: '4.9',
+    reviews: '218',
+    distance: '2.1 km',
+    time: 'Tomorrow 12:30–1:30',
+    image: foodImages.thali,
+    avatar: foodImages.cook1,
+    bio: 'I cook the lunch I would want my own family to eat — seasonal, balanced and always from scratch. My kitchen has been feeding RS Puram for 14 years.',
+    dishes: [
+      { id: 'meera-lemon', name: 'Lemon rice comfort box', description: 'Lemon rice, kootu, poriyal & vadai', price: 159, image: foodImages.lemonRice, tags: ['Veg', 'No onion garlic'] },
+      { id: 'meera-idli', name: 'Idli & sambar set', description: 'Six soft idlis, sambar and chutney', price: 118, image: foodImages.idli, tags: ['Veg', 'Breakfast'] },
+      { id: 'meera-sweet', name: 'Sakkarai pongal', description: 'Ghee, jaggery and moong dal', price: 95, image: foodImages.sweets, tags: ['Festival special'] },
+    ],
+  },
+  {
+    id: 'anitha',
+    name: 'Anitha Bakes',
+    cook: 'Anitha Nair',
+    cuisine: 'Sourdough · Desserts',
+    rating: '4.8',
+    reviews: '174',
+    distance: '3.6 km',
+    time: 'Today 5:00–6:00',
+    image: foodImages.sweets,
+    avatar: foodImages.cook2,
+    bio: 'A former pastry chef, now baking small batches with stone-ground flour and butter worth the splurge.',
+    dishes: [
+      { id: 'anitha-bread', name: 'Country sourdough loaf', description: 'Naturally leavened, 24-hour ferment', price: 210, image: foodImages.sweets, tags: ['Eggless', 'Pre-order'] },
+      { id: 'anitha-cake', name: 'Dark chocolate tea cake', description: 'Rich cocoa, walnut and sea salt', price: 340, image: foodImages.story, tags: ['Eggless'] },
+    ],
+  },
+  {
+    id: 'shafi',
+    name: 'Shafi’s Table',
+    cook: 'Shafi Rahman',
+    cuisine: 'Malabar · Non-veg',
+    rating: '4.9',
+    reviews: '308',
+    distance: '4.2 km',
+    time: 'Tomorrow 7:30–8:30',
+    image: foodImages.biryani,
+    avatar: foodImages.cook3,
+    bio: 'The Malabar recipes in my home have travelled through three generations. Every spice is roasted fresh each morning.',
+    dishes: [
+      { id: 'shafi-biryani', name: 'Thalassery chicken biryani', description: 'Jeerakasala rice, raita & pickle', price: 279, image: foodImages.biryani, tags: ['Halal', 'Medium spice'] },
+      { id: 'shafi-pathiri', name: 'Pathiri & chicken stew', description: 'Five pathiris with coconut stew', price: 235, image: foodImages.dosa, tags: ['Halal'] },
+    ],
+  },
+];
