@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "LOOM cook-side backend (NestJS + PostgreSQL)",
   "private": true,
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "build": "nest build",
     "start": "node dist/main.js",

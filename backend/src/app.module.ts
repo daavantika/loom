@@ -16,6 +16,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { MessagesModule } from './messages/messages.module';
 import { AssistantModule } from './assistant/assistant.module';
 import { DeliveryModule } from './delivery/delivery.module';
+import { HealthModule } from './health/health.module';
 
 // PGlite (used as the embedded dev/test Postgres — see scripts/dev-db.ts) only
 // multiplexes a single underlying connection per instance, so it's capped at
@@ -66,6 +67,7 @@ function poolFor(url: string): { max: number } {
     MessagesModule,
     AssistantModule,
     DeliveryModule,
+    HealthModule,
   ],
 })
 export class AppModule {}
