@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import { UploadsService } from './uploads.service';
-import { FirebaseStorageClientService } from './firebase-storage-client.service';
+import { SupabaseStorageClientService } from './supabase-storage-client.service';
 import { UPLOADS_DIR } from './uploads.constants';
 
 function makeRequest() {
@@ -11,13 +11,13 @@ function makeRequest() {
   } as any;
 }
 
-function makeFirebase(isConfigured: boolean, upload = jest.fn()): FirebaseStorageClientService {
-  return { isConfigured: () => isConfigured, upload } as unknown as FirebaseStorageClientService;
+function makeSupabase(isConfigured: boolean, upload = jest.fn()): SupabaseStorageClientService {
+  return { isConfigured: () => isConfigured, upload } as unknown as SupabaseStorageClientService;
 }
 
-describe('UploadsService.store — local-disk fallback (Firebase not configured)', () => {
+describe('UploadsService.store — local-disk fallback (Supabase not configured)', () => {
   it('writes the buffer to UPLOADS_DIR and returns an absolute URL built from the request host', async () => {
-    const service = new UploadsService(makeFirebase(false));
+    const service = new UploadsService(makeSupabase(false));
     const file = { originalname: 'kitchen.jpg', buffer: Buffer.from('fake-bytes'), mimetype: 'image/jpeg' } as Express.Multer.File;
 
     const url = await service.store(file, makeRequest());
@@ -29,15 +29,15 @@ describe('UploadsService.store — local-disk fallback (Firebase not configured)
   });
 });
 
-describe('UploadsService.store — Firebase branch (configured)', () => {
-  it('delegates to FirebaseStorageClientService.upload with an uploads/<uuid><ext> object path and the mimetype', async () => {
-    const upload = jest.fn().mockResolvedValue('https://firebasestorage.googleapis.com/v0/b/x/o/uploads%2Fabc.jpg?alt=media&token=t');
-    const service = new UploadsService(makeFirebase(true, upload));
+describe('UploadsService.store — Supabase branch (configured)', () => {
+  it('delegates to SupabaseStorageClientService.upload with an uploads/<uuid><ext> object path and the mimetype', async () => {
+    const upload = jest.fn().mockResolvedValue('https://project-ref.supabase.co/storage/v1/object/public/uploads/uploads/abc.jpg');
+    const service = new UploadsService(makeSupabase(true, upload));
     const file = { originalname: 'kitchen.jpg', buffer: Buffer.from('fake-bytes'), mimetype: 'image/jpeg' } as Express.Multer.File;
 
     const url = await service.store(file, makeRequest());
 
     expect(upload).toHaveBeenCalledWith(expect.stringMatching(/^uploads\/[0-9a-f-]+\.jpg$/), file.buffer, 'image/jpeg');
-    expect(url).toBe('https://firebasestorage.googleapis.com/v0/b/x/o/uploads%2Fabc.jpg?alt=media&token=t');
+    expect(url).toBe('https://project-ref.supabase.co/storage/v1/object/public/uploads/uploads/abc.jpg');
   });
 });

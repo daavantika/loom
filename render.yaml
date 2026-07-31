@@ -35,7 +35,9 @@ services:
         sync: false
       - key: PAYOUT_DETAILS_ENCRYPTION_KEY
         sync: false
-      - key: FIREBASE_STORAGE_BUCKET
+      - key: SUPABASE_URL
         sync: false
-      - key: FIREBASE_SERVICE_ACCOUNT_B64
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_STORAGE_BUCKET
         sync: false
