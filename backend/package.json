@@ -24,7 +24,8 @@
     "db:dev:admin": "ts-node scripts/dev-db.ts --name=admin",
     "db:test:user": "ts-node scripts/dev-db.ts --name=user --test",
     "db:test:admin": "ts-node scripts/dev-db.ts --name=admin --test",
-    "seed:admin": "ts-node scripts/seed-admin.ts"
+    "seed:admin": "ts-node scripts/seed-admin.ts",
+    "boot:prepare": "ts-node scripts/boot-prepare.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.0",

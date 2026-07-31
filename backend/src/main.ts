@@ -12,55 +12,34 @@ import { UPLOADS_DIR } from './uploads/uploads.constants';
 const BACKEND_ROOT = join(__dirname, '..');
 
 /**
- * Runs pending migrations against both databases at boot, by shelling out
- * to the exact same `npm run migration:run` used locally/in CI — not by
- * calling DataSource.runMigrations() in-process. Migration files under
- * migrations/ are plain .ts, deliberately excluded from the tsc build
- * (tsconfig.json's rootDir is src/, "migrations" is in its exclude list),
- * so loading them needs ts-node; `npm run migration:run` already handles
- * that correctly via `typeorm-ts-node-commonjs` in its OWN process.
- * Registering ts-node in-process here instead was tried and rejected: it
- * pulls in source-map-support, which — when the running file is already-
- * compiled, sourcemapped dist/main.js — resolves subsequent requires
- * against the *source* paths instead of dist/, breaking `./app.module`.
- * Needed at all because Render's free tier supports neither
- * preDeployCommand nor Shell access (both confirmed paid-only), so there's
- * no separate step to run this; doing it here is safe on every boot since
- * TypeORM tracks already-applied migrations and skips them.
+ * Runs pending migrations against both databases, and — if SEED_ADMIN_EMAIL/
+ * SEED_ADMIN_PASSWORD are set — seeds/updates the admin account, all by
+ * shelling out to a single `npm run boot:prepare` (scripts/boot-prepare.ts)
+ * rather than calling DataSource.runMigrations()/upsertAdmin() in-process.
+ * Migration files under migrations/ are plain .ts, deliberately excluded
+ * from the tsc build (tsconfig.json's rootDir is src/, "migrations" is in
+ * its exclude list), so loading them needs ts-node; boot-prepare.ts is run
+ * via ts-node in its OWN process for exactly that reason. Registering
+ * ts-node in-process here instead was tried and rejected: it pulls in
+ * source-map-support, which — when the running file is already-compiled,
+ * sourcemapped dist/main.js — resolves subsequent requires against the
+ * *source* paths instead of dist/, breaking `./app.module`. This used to be
+ * three separate shell-outs (migration:run:user, migration:run:admin,
+ * seed:admin), each paying its own ts-node cold-start cost — on Render free
+ * tier's throttled CPU that made a cold start (after the instance spins
+ * down from inactivity) take 2+ minutes. Consolidated into one script/one
+ * process to cut that down. Needed at all because Render's free tier
+ * supports neither preDeployCommand nor Shell access (both confirmed
+ * paid-only), so there's no separate step to run this; doing it here is
+ * safe on every boot since TypeORM tracks already-applied migrations and
+ * skips them, and admin upsert is idempotent.
  */
-function runStartupMigrations(): void {
-  execFileSync('npm', ['run', 'migration:run'], { cwd: BACKEND_ROOT, stdio: 'inherit' });
-}
-
-/**
- * Optional, idempotent convenience: if both SEED_ADMIN_EMAIL and
- * SEED_ADMIN_PASSWORD are set, ensures that admin account exists — same
- * reason as runStartupMigrations(): no Shell access on Render's free tier
- * to run scripts/seed-admin.ts manually. Leave both unset to skip (the
- * default), matching this codebase's existing "unset = skip" convention
- * for every other optional integration (Razorpay/Gemini/Porter/Supabase).
- *
- * Shells out to the same scripts/seed-admin.ts used for manual/local runs
- * rather than importing AdminDataSource in-process: TypeORM's
- * DataSource.initialize() eagerly resolves the `migrations` glob on its
- * config (raw .ts files under migrations/admin-db/) even when
- * .runMigrations() is never called, hitting the exact same "no ts-node in
- * this process" problem runStartupMigrations() above already had to work
- * around. execFileSync (not execSync) so the email/password — real,
- * operator-supplied values, not fixed literals — are passed as argv, never
- * interpolated through a shell.
- */
-function seedAdminIfConfigured(): void {
-  const email = process.env.SEED_ADMIN_EMAIL || undefined;
-  const password = process.env.SEED_ADMIN_PASSWORD || undefined;
-  if (!email || !password) return;
-
-  execFileSync('npm', ['run', 'seed:admin', '--', email, password], { cwd: BACKEND_ROOT, stdio: 'inherit' });
+function prepareDatabase(): void {
+  execFileSync('npm', ['run', 'boot:prepare'], { cwd: BACKEND_ROOT, stdio: 'inherit' });
 }
 
 async function bootstrap() {
-  runStartupMigrations();
-  await seedAdminIfConfigured();
+  prepareDatabase();
 
   // rawBody: true preserves req.rawBody alongside the parsed body — Express's
   // default JSON parser consumes the raw bytes, but the Razorpay webhook
