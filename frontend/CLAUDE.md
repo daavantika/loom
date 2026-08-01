@@ -1,6 +1,6 @@
 # CLAUDE.md — frontend
 
-Guidance for working in `frontend/`. See the root `CLAUDE.md` for repo-wide context and `README.md` here for setup/run/test commands. No backend calls yet — reads/writes only `localStorage` (`src/lib/persistence.ts`), same keys the vanilla app used.
+Guidance for working in `frontend/`. See the root `CLAUDE.md` for repo-wide context and `README.md` here for setup/run/test commands. Wired to the real backend since `../specs/phase-9-frontend-core-loop` — `src/lib/api.ts` (`apiFetch`) and `src/lib/upload.ts` are the client, base URL from `VITE_API_URL` (build-time env var, no other environment-specific config exists). Some non-core screens still use mock data / `localStorage` (`src/lib/persistence.ts`) where their phase spec left them unwired — check the relevant `specs/phase-*` before assuming a given screen is or isn't real-backed.
 
 ## Architecture
 

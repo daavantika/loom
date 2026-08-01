@@ -1,5 +1,7 @@
 # Phase 2 Spec — Website Productionization
 
+> **Superseded for hosting.** This spec targeted the pre-migration vanilla prototype at the repo root. `phase-6-react-migration` replaced it with `../../frontend`, and `phase-16-frontend-hosting` covers getting that React app hosted. This spec's other requirements (Lighthouse scores, accessibility pass, SEO metadata, error/empty-state audit, image-fallback behavior) were never re-verified against `../../frontend` and remain open — a future phase should re-run this checklist against the React app if/when needed.
+
 ## Goal
 Take the existing static prototype (`index.html`, `app.js`, `styles.css`) — currently mock-data/localStorage only, no backend calls — and harden it into a real, publicly hosted website on a custom HTTPS domain. This is the site Median.co will wrap in Phase 4, so it must stand on its own as a finished product first.
 

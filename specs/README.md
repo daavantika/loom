@@ -16,12 +16,13 @@ Each phase lives in its own folder with a `spec.md` (what/why, acceptance criter
 - Later backend phases (13, 15+: reviews/plans/catering, inventory/pricing, notifications/analytics) are referenced in `../backend/README.md` but not yet spec'd.
 
 ## Website & app track
-Frontend stays on mock data/localStorage through this track — no backend wiring yet (backend integration is a deliberately deferred, separate future phase once more backend phases exist).
+`phase-6-react-migration` superseded the static prototype with the React app in `../frontend`, and `phase-9`/`phase-9.5` (see Backend track above) wired it to the real backend — this track is not mock-data-only anymore.
 
-- [`phase-2-website-productionization`](./phase-2-website-productionization) — turn the static prototype into a real, hosted, production-quality website on a custom HTTPS domain.
+- [`phase-2-website-productionization`](./phase-2-website-productionization) — turn the static prototype into a real, hosted, production-quality website on a custom HTTPS domain. *(superseded for hosting — see `phase-16-frontend-hosting`; its accessibility/Lighthouse/SEO/error-state requirements were never re-verified against `../frontend` and remain open.)*
 - [`phase-3-pwa-readiness`](./phase-3-pwa-readiness) — installable PWA baseline (manifest, service worker, iOS/Android home-screen polish) ahead of native wrapping.
 - [`phase-4-median-packaging`](./phase-4-median-packaging) — wrap the site in [Median.co](https://median.co) to produce testable Android/iOS builds.
 - [`phase-5-app-store-launch`](./phase-5-app-store-launch) — privacy policy, store listings, Guideline 4.2 mitigation (push notifications), Play Store + App Store submission.
 - [`phase-6-react-migration`](./phase-6-react-migration) — like-for-like port of the vanilla-JS app to React + TypeScript + Zustand + React Router, ahead of further feature growth. *(implemented — see `../frontend`; ran ahead of Phase 2/3 completion by explicit request. The Phase 2 static assets/meta tags/CSS — including its accessibility and contrast fixes — carried over directly since `frontend/` copied the already-fixed files, but Phase 2's live acceptance criteria (Lighthouse, real hosting) haven't been re-run against this build, and Phase 3 (PWA manifest/service worker) was never implemented against either codebase.)* Phases 4/5 (app packaging/launch) target this React build going forward.
+- [`phase-16-frontend-hosting`](./phase-16-frontend-hosting) — deploy `../frontend` to Cloudflare Pages, wired to the live Render backend via `VITE_API_URL`. *(in progress — repo-side config complete; live deploy pending manual Cloudflare Pages project setup, which only the account owner can do)*
 
 Each phase's `spec.md` states its acceptance criteria — treat a phase as done only when every criterion is met, not when the code merely "looks right."
