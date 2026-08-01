@@ -38,7 +38,15 @@ export default function Home() {
       </h1>
       <div className="search-wrap">
         <span className="search-icon">⌕</span>
-        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search cooks, dishes, cuisines…" aria-label="Search" />
+        <input
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            if (e.target.value.trim()) navigate('/explore');
+          }}
+          placeholder="Search cooks, dishes, cuisines…"
+          aria-label="Search"
+        />
         <button className="filter-trigger" onClick={() => openModal({ kind: 'filters' })} aria-label="Open filters">
           ≡
         </button>
