@@ -205,7 +205,7 @@ h3 { font-size: 15px; margin-bottom: 5px; }
 .order-actions button { flex: 1; }
 .profile-page .account-card { display: flex; align-items: center; gap: 12px; padding: 16px; border-radius: 19px; background: #f5ebe4; }
 .avatar-large { display: grid; width: 53px; height: 53px; place-items: center; border-radius: 18px; background: #d3aa81; color: white; font-size: 19px; font-weight: 700; }
-.account-card h3 { margin: 0 0 3px; }
+.account-card h3 { margin: 0 0 3px; color: var(--ink); }
 .account-card p { margin: 0; color: var(--muted); font-size: 12px; }
 .account-card button { margin-left: auto; color: var(--orange); background: transparent; font-size: 20px; }
 .settings-group { margin-top: 20px; overflow: hidden; border: 1px solid var(--line); border-radius: 17px; background: white; }
@@ -361,12 +361,12 @@ h3 { font-size: 15px; margin-bottom: 5px; }
 .customer-list article { display: flex; align-items: center; gap: 11px; padding: 12px; border-bottom: 1px solid var(--line); }
 .customer-list article:last-child { border: 0; }
 .customer-list div { flex: 1; }
-.customer-list h3 { margin: 0 0 3px; font-size: 13px; }
+.customer-list h3 { margin: 0 0 3px; font-size: 13px; color: var(--ink); }
 .customer-list p { margin: 0; color: var(--muted); font-size: 10px; }
 .customer-list button, .feedback-card button { padding: 7px 8px; border-radius: 8px; color: var(--orange); background: #e4f3e8; font-size: 10px; font-weight: 700; }
 .customer-avatar { display: grid; width: 35px; height: 35px; place-items: center; border-radius: 12px; color: #fff; background: #809f89; font-size: 13px; font-weight: 700; }
 .feedback-card { display: grid; gap: 7px; padding: 15px; border: 1px solid #dcebe1; border-radius: 17px; background: #f1f9f3; }
-.feedback-card strong { font-family: Fraunces, Georgia, serif; font-size: 15px; }
+.feedback-card strong { font-family: Fraunces, Georgia, serif; font-size: 15px; color: var(--ink); }
 .feedback-card span { color: #577160; font-size: 11px; }
 .feedback-card button { width: fit-content; margin-top: 3px; }
 .payout-summary { display: grid; gap: 4px; padding: 17px; margin-top: 18px; border-radius: 18px; color: white; background: var(--ink); }
