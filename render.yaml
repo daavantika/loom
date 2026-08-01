@@ -43,6 +43,12 @@ services:
         sync: false
       - key: SUPABASE_STORAGE_BUCKET
         sync: false
+      # Optional — AI assistant (Google Gemini). Leave unset to keep the
+      # assistant chat replying with a static "not available" fallback
+      # message (safe default, nothing breaks) — see AssistantModal/
+      # backend/src/assistant.
+      - key: GEMINI_API_KEY
+        sync: false
       # Optional — Shell access (needed to run scripts/seed-admin.ts
       # manually) is also paid-only on Render, so set these to have the app
       # seed/update one admin account at boot instead. Leave both unset
