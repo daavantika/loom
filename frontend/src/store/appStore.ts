@@ -210,7 +210,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   activeFilters: ['Within 5 km', 'Verified cooks'],
   followed: new Set(),
   delivery: 'Tomorrow · 12:30–1:30 pm',
-  address: 'RS Puram, Coimbatore',
+  address: '',
   cookTab: 'Overview',
   adminTab: 'Needs review',
   reviews: loadReviews(),

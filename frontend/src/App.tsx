@@ -44,7 +44,7 @@ export default function App() {
           <span className="pin">⌖</span>
           <span>
             <small>Delivering to</small>
-            <strong>{address}</strong>
+            <strong>{address || 'Set your location'}</strong>
           </span>
           <span className="chevron">⌄</span>
         </button>
