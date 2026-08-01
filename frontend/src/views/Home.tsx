@@ -6,6 +6,7 @@ import { todaysSpecials } from '../lib/specials';
 import { foodImages } from '../data/kitchens';
 import ClickableCard from '../components/ClickableCard';
 import QtyControl from '../components/QtyControl';
+import EmptyState from '../components/EmptyState';
 
 const CHIPS = ['For you', 'Today’s specials', 'Tiffin plans', 'Festival foods', 'Catering'];
 
@@ -19,6 +20,14 @@ export default function Home() {
   const openModal = useAppStore((s) => s.openModal);
 
   const specials = todaysSpecials(kitchens);
+
+  // Searching from Home shows results inline (same match rule as Explore's
+  // search) instead of navigating away — typing here should feel like
+  // narrowing this page, not jumping somewhere else.
+  const term = search.trim().toLowerCase();
+  const searchResults = term
+    ? kitchens.filter((k) => `${k.name} ${k.cook} ${k.cuisine} ${k.dishes.map((d) => d.name).join(' ')}`.toLowerCase().includes(term))
+    : null;
 
   const onChip = (chip: string) => {
     setActiveChip(chip);
@@ -40,10 +49,7 @@ export default function Home() {
         <span className="search-icon">⌕</span>
         <input
           value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            if (e.target.value.trim()) navigate('/explore');
-          }}
+          onChange={(e) => setSearch(e.target.value)}
           placeholder="Search cooks, dishes, cuisines…"
           aria-label="Search"
         />
@@ -58,95 +64,117 @@ export default function Home() {
           </button>
         ))}
       </div>
-      <section className="hero-card">
-        <p className="eyebrow">Weekend table</p>
-        <h2>Sunday lunch, from a kitchen you’ll love.</h2>
-        <p>Scheduled for your table, prepared with care.</p>
-        <button className="pill-button" onClick={() => openModal({ kind: 'cook', cookId: 'meera' })}>
-          Meet Meera →
-        </button>
-      </section>
+      {searchResults ? (
+        <section className="kitchen-list">
+          {searchResults.length ? (
+            searchResults.map((k) => (
+              <ClickableCard key={k.id} className="kitchen-row" ariaLabel={`Open ${k.name}`} onClick={() => openModal({ kind: 'cook', cookId: k.id })}>
+                <img src={k.image} alt={`${k.name} food`} loading="lazy" />
+                <div className="kitchen-copy">
+                  <div>
+                    <h3>{k.name}</h3>
+                    <p>{k.cuisine}</p>
+                  </div>
+                </div>
+              </ClickableCard>
+            ))
+          ) : (
+            <EmptyState icon="⌕" title="No matches yet" body={`Nothing found for "${search.trim()}" — try a different name or dish.`} />
+          )}
+        </section>
+      ) : (
+        <>
+          <section className="hero-card">
+            <p className="eyebrow">Weekend table</p>
+            <h2>Sunday lunch, from a kitchen you’ll love.</h2>
+            <p>Scheduled for your table, prepared with care.</p>
+            <button className="pill-button" onClick={() => navigate('/explore')}>
+              Explore kitchens →
+            </button>
+          </section>
 
-      <div className="section-head">
-        <h2>People near you</h2>
-        <button onClick={() => navigate('/explore')}>See all</button>
-      </div>
-      <div className="h-scroll">
-        {kitchens.map((k) => (
-          <ClickableCard key={k.id} className="cook-card" ariaLabel={`Open ${k.name}`} onClick={() => openModal({ kind: 'cook', cookId: k.id })}>
-            <div className="image-wrap">
-              <img src={k.image} alt={`${k.name} food`} loading="lazy" />
-              <span className="verified">✓ Verified kitchen</span>
-            </div>
-            <div className="card-copy">
-              <h3>{k.name}</h3>
-              <p>
-                <span className="rating">★ {k.rating}</span> · {k.distance}
-              </p>
-            </div>
-          </ClickableCard>
-        ))}
-      </div>
+          <div className="section-head">
+            <h2>People near you</h2>
+            <button onClick={() => navigate('/explore')}>See all</button>
+          </div>
+          <div className="h-scroll">
+            {kitchens.map((k) => (
+              <ClickableCard key={k.id} className="cook-card" ariaLabel={`Open ${k.name}`} onClick={() => openModal({ kind: 'cook', cookId: k.id })}>
+                <div className="image-wrap">
+                  <img src={k.image} alt={`${k.name} food`} loading="lazy" />
+                  <span className="verified">✓ Verified kitchen</span>
+                </div>
+                <div className="card-copy">
+                  <h3>{k.name}</h3>
+                  <p>
+                    <span className="rating">★ {k.rating}</span> · {k.distance}
+                  </p>
+                </div>
+              </ClickableCard>
+            ))}
+          </div>
 
-      <div className="section-head">
-        <h2>Today’s specials</h2>
-        <button onClick={() => navigate('/explore')}>See all</button>
-      </div>
-      <div className="h-scroll">
-        {specials.map(({ dish, cook, cookId, left }) => (
-          <ClickableCard key={dish.id} className="special-card" ariaLabel={`Open ${cook}`} onClick={() => openModal({ kind: 'cook', cookId })}>
-            <img src={dish.image} alt={dish.name} loading="lazy" />
-            <div className="special-info">
-              <h3>{dish.name}</h3>
-              <p>{cook}</p>
-              <span className="quantity-note">{left}</span>
-              <div className="special-row">
-                <strong>{currency(dish.price)}</strong>
-                <QtyControl dish={dish} style="add-mini" />
+          <div className="section-head">
+            <h2>Today’s specials</h2>
+            <button onClick={() => navigate('/explore')}>See all</button>
+          </div>
+          <div className="h-scroll">
+            {specials.map(({ dish, cook, cookId, left }) => (
+              <ClickableCard key={dish.id} className="special-card" ariaLabel={`Open ${cook}`} onClick={() => openModal({ kind: 'cook', cookId })}>
+                <img src={dish.image} alt={dish.name} loading="lazy" />
+                <div className="special-info">
+                  <h3>{dish.name}</h3>
+                  <p>{cook}</p>
+                  <span className="quantity-note">{left}</span>
+                  <div className="special-row">
+                    <strong>{currency(dish.price)}</strong>
+                    <QtyControl dish={dish} style="add-mini" />
+                  </div>
+                </div>
+              </ClickableCard>
+            ))}
+          </div>
+
+          <section className="section-head">
+            <h2>Your week, sorted</h2>
+          </section>
+          <article className="plan-card">
+            <div className="plan-icon">☼</div>
+            <div>
+              <h3>Fresh tiffins, your rhythm</h3>
+              <p>Choose a cook. Pick your days. Pause any week.</p>
+            </div>
+            <button onClick={() => openModal({ kind: 'plan' })} aria-label="Explore tiffin plans">
+              →
+            </button>
+          </article>
+
+          <div className="section-head">
+            <h2>Stories from the stove</h2>
+            <button onClick={() => openModal({ kind: 'stories' })}>Read more</button>
+          </div>
+          <div className="h-scroll">
+            <ClickableCard className="story-card" ariaLabel="Read stories from the stove" onClick={() => openModal({ kind: 'stories' })}>
+              <img src={foodImages.story} alt="Handmade dessert" loading="lazy" />
+              <div className="card-copy">
+                <h3>Why I still hand-grind my masalas</h3>
               </div>
-            </div>
-          </ClickableCard>
-        ))}
-      </div>
-
-      <section className="section-head">
-        <h2>Your week, sorted</h2>
-      </section>
-      <article className="plan-card">
-        <div className="plan-icon">☼</div>
-        <div>
-          <h3>Fresh tiffins, your rhythm</h3>
-          <p>Choose a cook. Pick your days. Pause any week.</p>
-        </div>
-        <button onClick={() => openModal({ kind: 'plan' })} aria-label="Explore tiffin plans">
-          →
-        </button>
-      </article>
-
-      <div className="section-head">
-        <h2>Stories from the stove</h2>
-        <button onClick={() => openModal({ kind: 'stories' })}>Read more</button>
-      </div>
-      <div className="h-scroll">
-        <ClickableCard className="story-card" ariaLabel="Read stories from the stove" onClick={() => openModal({ kind: 'stories' })}>
-          <img src={foodImages.story} alt="Handmade dessert" loading="lazy" />
-          <div className="card-copy">
-            <h3>Why I still hand-grind my masalas</h3>
+            </ClickableCard>
+            <ClickableCard className="story-card" ariaLabel="Read stories from the stove" onClick={() => openModal({ kind: 'stories' })}>
+              <img src={foodImages.dosa} alt="South Indian breakfast" loading="lazy" />
+              <div className="card-copy">
+                <h3>A tiffin ritual from Pollachi</h3>
+              </div>
+            </ClickableCard>
+            <ClickableCard className="story-card" ariaLabel="Read stories from the stove" onClick={() => openModal({ kind: 'stories' })}>
+              <img src={foodImages.sweets} alt="Festival sweets" loading="lazy" />
+              <div className="card-copy">
+                <h3>My grandmother’s Diwali murukku</h3>
+              </div>
+            </ClickableCard>
           </div>
-        </ClickableCard>
-        <ClickableCard className="story-card" ariaLabel="Read stories from the stove" onClick={() => openModal({ kind: 'stories' })}>
-          <img src={foodImages.dosa} alt="South Indian breakfast" loading="lazy" />
-          <div className="card-copy">
-            <h3>A tiffin ritual from Pollachi</h3>
-          </div>
-        </ClickableCard>
-        <ClickableCard className="story-card" ariaLabel="Read stories from the stove" onClick={() => openModal({ kind: 'stories' })}>
-          <img src={foodImages.sweets} alt="Festival sweets" loading="lazy" />
-          <div className="card-copy">
-            <h3>My grandmother’s Diwali murukku</h3>
-          </div>
-        </ClickableCard>
-      </div>
+        </>
+      )}
     </>
   );
 }
