@@ -231,7 +231,11 @@ export default function SellerRegistration() {
             Uploaded ✓ <button onClick={() => setFssaiDocUrl('')}>Remove</button>
           </p>
         ) : (
-          <PhotoUpload label="Upload FSSAI document" onUploaded={setFssaiDocUrl} />
+          <PhotoUpload
+            label="Upload FSSAI document"
+            onUploaded={setFssaiDocUrl}
+            accept="image/jpeg,image/png,image/webp,application/pdf"
+          />
         )}
 
         <label htmlFor="reg-payout-method" style={{ marginTop: 12 }}>

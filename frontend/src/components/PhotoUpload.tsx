@@ -1,7 +1,16 @@
 import { useState, type ChangeEvent } from 'react';
 import { uploadFile } from '../lib/upload';
 
-export default function PhotoUpload({ label, onUploaded }: { label: string; onUploaded: (url: string) => void }) {
+export default function PhotoUpload({
+  label,
+  onUploaded,
+  accept = 'image/jpeg,image/png,image/webp',
+}: {
+  label: string;
+  onUploaded: (url: string) => void;
+  /** Defaults to images only — pass the wider FSSAI-document set explicitly where a PDF is valid. */
+  accept?: string;
+}) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,7 +36,7 @@ export default function PhotoUpload({ label, onUploaded }: { label: string; onUp
         {uploading ? 'Uploading…' : label}
         <input
           type="file"
-          accept="image/jpeg,image/png,image/webp,application/pdf"
+          accept={accept}
           onChange={handleChange}
           disabled={uploading}
           style={{ display: 'none' }}
