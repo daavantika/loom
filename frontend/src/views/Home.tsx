@@ -3,7 +3,6 @@ import { useAppStore } from '../store/appStore';
 import { useKitchens } from '../store/hooks';
 import { currency } from '../lib/format';
 import { todaysSpecials } from '../lib/specials';
-import { foodImages } from '../data/kitchens';
 import ClickableCard from '../components/ClickableCard';
 import QtyControl from '../components/QtyControl';
 import EmptyState from '../components/EmptyState';
@@ -152,26 +151,6 @@ export default function Home() {
           <div className="section-head">
             <h2>Stories from the stove</h2>
             <button onClick={() => openModal({ kind: 'stories' })}>Read more</button>
-          </div>
-          <div className="h-scroll">
-            <ClickableCard className="story-card" ariaLabel="Read stories from the stove" onClick={() => openModal({ kind: 'stories' })}>
-              <img src={foodImages.story} alt="Handmade dessert" loading="lazy" />
-              <div className="card-copy">
-                <h3>Why I still hand-grind my masalas</h3>
-              </div>
-            </ClickableCard>
-            <ClickableCard className="story-card" ariaLabel="Read stories from the stove" onClick={() => openModal({ kind: 'stories' })}>
-              <img src={foodImages.dosa} alt="South Indian breakfast" loading="lazy" />
-              <div className="card-copy">
-                <h3>A tiffin ritual from Pollachi</h3>
-              </div>
-            </ClickableCard>
-            <ClickableCard className="story-card" ariaLabel="Read stories from the stove" onClick={() => openModal({ kind: 'stories' })}>
-              <img src={foodImages.sweets} alt="Festival sweets" loading="lazy" />
-              <div className="card-copy">
-                <h3>My grandmother’s Diwali murukku</h3>
-              </div>
-            </ClickableCard>
           </div>
         </>
       )}

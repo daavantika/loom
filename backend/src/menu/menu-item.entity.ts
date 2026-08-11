@@ -31,6 +31,27 @@ export class MenuItem {
   @Column({ type: 'boolean', default: true })
   active!: boolean;
 
+  @Column({ name: 'is_todays_special', type: 'boolean', default: false })
+  isTodaysSpecial!: boolean;
+
+  @Column({ name: 'special_portions_left', type: 'integer', nullable: true })
+  specialPortionsLeft?: number;
+
+  @Column({ name: 'calories_kcal', type: 'integer', nullable: true })
+  caloriesKcal?: number;
+
+  @Column({ name: 'protein_g', type: 'numeric', nullable: true })
+  proteinG?: number;
+
+  @Column({ name: 'fat_g', type: 'numeric', nullable: true })
+  fatG?: number;
+
+  @Column({ name: 'carbs_g', type: 'numeric', nullable: true })
+  carbsG?: number;
+
+  @Column({ name: 'fibre_g', type: 'numeric', nullable: true })
+  fibreG?: number;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;
 

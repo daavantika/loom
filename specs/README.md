@@ -13,7 +13,8 @@ Each phase lives in its own folder with a `spec.md` (what/why, acceptance criter
 - [`phase-11-cook-customer-chat`](./phase-11-cook-customer-chat) — real cook↔customer messaging (replacing the old fully-mocked ChatModal), including a new Messages tab on the cook dashboard. *(implemented)*
 - [`phase-12-ai-assistant`](./phase-12-ai-assistant) — real AI assistant (Google Gemini) replacing the old fully-scripted AssistantModal, grounded in the live verified-kitchen catalog so it never recommends a kitchen/dish that doesn't actually exist. *(implemented)*
 - [`phase-14-delivery-logistics`](./phase-14-delivery-logistics) — automatic Porter dispatch when a cook marks an order ready, with a webhook path back to delivery status. *(in progress — module/schema/event-wiring code complete and tested against the unconfigured path; the real Porter API contract, sandbox credentials, and true end-to-end verification are deferred until the user completes Porter Enterprise onboarding)*
-- Later backend phases (13, 15+: reviews/plans/catering, inventory/pricing, notifications/analytics) are referenced in `../backend/README.md` but not yet spec'd.
+- [`phase-17-cook-content-nutrition`](./phase-17-cook-content-nutrition) — cook-authored "today's special" flag + portions on menu items, a new `src/stories` module (cook-posted kitchen stories, public feed from verified cooks only), and optional per-dish nutrition (calories/protein/fat/carbs/fibre + highlight tags). *(implemented)*
+- Later backend phases (13, 15: reviews/plans/catering, inventory/pricing, notifications/analytics) are referenced in `../backend/README.md` but not yet spec'd.
 
 ## Website & app track
 `phase-6-react-migration` superseded the static prototype with the React app in `../frontend`, and `phase-9`/`phase-9.5` (see Backend track above) wired it to the real backend — this track is not mock-data-only anymore.

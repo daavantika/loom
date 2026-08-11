@@ -14,6 +14,7 @@ import { ModerationModule } from './moderation/moderation.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { PaymentsModule } from './payments/payments.module';
 import { MessagesModule } from './messages/messages.module';
+import { StoriesModule } from './stories/stories.module';
 import { AssistantModule } from './assistant/assistant.module';
 import { DeliveryModule } from './delivery/delivery.module';
 import { HealthModule } from './health/health.module';
@@ -65,6 +66,7 @@ function poolFor(url: string): { max: number } {
     UploadsModule,
     PaymentsModule,
     MessagesModule,
+    StoriesModule,
     AssistantModule,
     DeliveryModule,
     HealthModule,

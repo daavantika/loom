@@ -1,0 +1,25 @@
+# Phase 17 Plan — Technical Approach
+
+## Backend
+- `migrations/user-db/1700000000015-MenuItemEnrichment.ts` — adds `is_todays_special` (boolean, default false), `special_portions_left`, `calories_kcal`, `protein_g`, `fat_g`, `carbs_g`, `fibre_g` (all nullable, `CHECK (... >= 0)`) to `menu_items`.
+- `migrations/user-db/1700000000016-Stories.ts` — new `stories` table (`cook_id` FK to `cook_profiles`, `ON DELETE CASCADE`, matching `menu_items`' FK style), `title`, `body`, `image_url`, `created_at`; indexes on `cook_id` and `created_at DESC`.
+- `menu-item.entity.ts` / `save-menu-item.dto.ts` / `update-menu-item.dto.ts` / `menu.service.ts` — new fields threaded through `create`/`update`, following the existing pattern for `active`/`tags`. Nutrition columns typed as plain `number` (nullable), matching the existing `numeric` convention in `cook-profile.entity.ts` (no transformer).
+- `src/stories/` (new module, mirrors `src/messages/`'s self-contained shape): `story.entity.ts`, `dto/create-story.dto.ts`, `stories.service.ts`, `stories.controller.ts`, `stories.module.ts` (imports `CooksModule` for `CooksService`, exports `StoriesService`). `listPublicFeed` reuses `CooksService.searchPublic({ verifiedOnly: true })` — the same cross-DB-safe pattern `MessagesService.assertCookIsMessageable` uses — rather than joining across the user/admin DB split, then filters `stories` to that verified-cook-id set via `In(...)`.
+- Registered `StoriesModule` in `app.module.ts` (next to `MessagesModule`); added `Story` to `src/user-db/data-source.ts`'s entity list (needed by the migration CLI — the running app picks it up via `autoLoadEntities: true`).
+
+## Frontend
+- `data/api-types.ts` — `ApiMenuItem` gains the new fields (`isTodaysSpecial` required like `active`, the rest optional); new `ApiStory` (with `kitchenName`/`cookImage` only present on the public feed shape).
+- `data/types.ts` — `Dish` gains `caloriesKcal`/`proteinG`/`fatG`/`carbsG`/`fibreG` (`isTodaysSpecial`/`specialPortionsLeft` already existed but were always `undefined` in practice).
+- `lib/catalog.ts` `adaptMenuItemToDish` — maps all the new fields through; this was the one place silently dropping them.
+- `store/appStore.ts` — `MenuItemInput` extended; `updateMenuItem` changed from `Promise<void>` to `Promise<ActionResult>` (matching `createMenuItem`) so the edit flow can toast on success too; new `stories`/`myStories` state + `loadStories`/`loadMyStories`/`createStory`/`deleteStory` actions, following the `cookConversations`/`loadCookConversations` pattern exactly. `myStories` reset in `logout()`.
+- `views/Cook.tsx` `CookMenu` — rewritten to support edit (previously create-only): `editingId` state, `startEdit(item)` prefills the form from an existing `ApiMenuItem`, `submit()` calls `updateMenuItem` when editing else `createMenuItem`. New form fields: today's-special checkbox + portions input, five nutrition number inputs, a `NUTRITION_TAG_OPTIONS` checklist written into the existing `tags` array (no new backend concept needed for the qualitative highlights). `CookMore` gets a new "Share a story" settings-row.
+- `modals/CookStoriesModal.tsx` (new) — inline create form (title/body/`PhotoUpload`, reusing `components/PhotoUpload.tsx`) + list of the cook's own stories with delete, same `.seller-form`/`.menu-manager` classes `CookMenu` uses.
+- `data/modal.ts` + `components/ModalLayer.tsx` — new `{ kind: 'cookStories' }`.
+- `modals/StoriesModal.tsx` — rewritten from a permanent `EmptyState` to fetch `loadStories()` on mount and render the real feed (`.story-feed` CSS already existed, unused since the old hardcoded posts were removed).
+- `modals/CookProfileModal.tsx` — each dish row renders its `tags` as `.tag` badges (reusing the existing class, e.g. the "✓ Verified" badge) plus a joined nutrition string (`"320 kcal · 18g protein"`) when any nutrition field is present.
+
+## Verification
+1. `cd backend && npx tsc -b && npm test` — `menu.service.spec.ts` extended (today's-special/nutrition create+update), new `stories.service.spec.ts` (create, own-list scoping, delete ownership check, public feed verified-only filtering + empty-feed short-circuit). All 19 suites/150+ tests pass.
+2. Migration verified against a disposable local PGlite test DB (`npm run db:test:user` + `USER_DATABASE_URL=... npm run migration:run:user`), including a full `migration:revert:user` round-trip to confirm `down()` is correct — never run against the `.env`-configured Neon database directly as part of this verification.
+3. `cd frontend && npx tsc -b && npx vitest run` — extended `catalog.test.ts` (adapter maps the new fields through). All existing suites still pass (aside from a pre-existing, unrelated `orders-flow.test.tsx` timing flake confirmed present on `main` before this phase too).
+4. Manual: cook dashboard → Menu → add a dish marked as today's special with nutrition filled in → confirm it shows up in Home's "Today's specials" and the nutrition/tag badges render in `CookProfileModal`; cook dashboard → More → Share a story → confirm it appears in the customer-facing Stories modal.

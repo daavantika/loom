@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import AppRoutes from './AppRoutes';
 import { useAppStore } from './store/appStore';
+import type { Kitchen } from './data/types';
 
 function renderApp() {
   window.history.pushState({}, '', '/');
@@ -14,6 +15,38 @@ function renderApp() {
   );
 }
 
+// There's no mock-data fallback anymore (catalogKitchens is empty until a
+// real fetch succeeds) — tests that need kitchens/dishes on screen supply
+// their own fixture via catalogKitchens/catalogLoaded, same pattern as
+// orders-flow.test.tsx's beforeEach.
+const TEST_KITCHENS: Kitchen[] = [
+  {
+    id: 'k1',
+    name: 'Test Kitchen',
+    cook: 'Test Cook',
+    cuisine: 'Test cuisine',
+    rating: '4.9',
+    reviews: '10',
+    distance: '1 km',
+    time: 'Today',
+    image: 'https://example.com/kitchen.jpg',
+    avatar: 'https://example.com/avatar.jpg',
+    bio: 'A test kitchen.',
+    dishes: [
+      {
+        id: 'd1',
+        name: 'Test Dish',
+        description: 'A test dish',
+        price: 100,
+        image: 'https://example.com/dish.jpg',
+        tags: [],
+        isTodaysSpecial: true,
+        specialPortionsLeft: 5,
+      },
+    ],
+  },
+];
+
 beforeEach(() => {
   useAppStore.setState({
     cart: [],
@@ -23,6 +56,8 @@ beforeEach(() => {
     activeChip: 'For you',
     cookTab: 'Overview',
     adminTab: 'Needs review',
+    catalogKitchens: TEST_KITCHENS,
+    catalogLoaded: true,
   });
 });
 
@@ -34,9 +69,8 @@ describe('LOOM React app smoke test', () => {
   it('renders the home view on mount', () => {
     renderApp();
     expect(document.querySelector('h1')?.textContent).toContain('Good food has a');
-    expect(document.querySelectorAll('.cook-card').length).toBe(3);
-    expect(document.querySelectorAll('.special-card').length).toBe(3);
-    expect(document.querySelectorAll('.story-card').length).toBe(3);
+    expect(document.querySelectorAll('.cook-card').length).toBe(1);
+    expect(document.querySelectorAll('.special-card').length).toBe(1);
   });
 
   it('opens the cook profile modal when a special-card is clicked, without double-firing from the nested qty button', async () => {
@@ -45,18 +79,17 @@ describe('LOOM React app smoke test', () => {
     const specialCard = document.querySelector('.special-card')!;
     await user.click(specialCard);
     await waitFor(() => expect(document.querySelector('.modal-layer.visible')).toBeTruthy());
-    expect(document.querySelector('.modal-layer')!.textContent).toContain('Meera');
+    expect(document.querySelector('.modal-layer')!.textContent).toContain('Test Kitchen');
 
     // clicking backdrop closes it
     await user.click(document.querySelector('.modal-layer')!);
     await waitFor(() => expect(document.querySelector('.modal-layer.visible')).toBeFalsy());
   });
 
-  it('opens the stories modal when a story-card is clicked', async () => {
+  it('opens the stories modal when "Read more" is clicked', async () => {
     const user = userEvent.setup();
     renderApp();
-    const storyCard = document.querySelectorAll('.story-card')[0];
-    await user.click(storyCard);
+    await user.click(screen.getByText('Read more'));
     await waitFor(() => expect(document.querySelector('.modal-layer')!.textContent).toContain('Stories from the stove'));
   });
 

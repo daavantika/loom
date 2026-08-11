@@ -28,6 +28,13 @@ export class MenuService {
         pricePaise: dto.pricePaise,
         imageUrl: dto.imageUrl,
         tags: dto.tags ?? [],
+        isTodaysSpecial: dto.isTodaysSpecial ?? false,
+        specialPortionsLeft: dto.specialPortionsLeft,
+        caloriesKcal: dto.caloriesKcal,
+        proteinG: dto.proteinG,
+        fatG: dto.fatG,
+        carbsG: dto.carbsG,
+        fibreG: dto.fibreG,
       }),
     );
   }
@@ -48,6 +55,13 @@ export class MenuService {
     if (dto.imageUrl !== undefined) item.imageUrl = dto.imageUrl;
     if (dto.tags !== undefined) item.tags = dto.tags;
     if (dto.active !== undefined) item.active = dto.active;
+    if (dto.isTodaysSpecial !== undefined) item.isTodaysSpecial = dto.isTodaysSpecial;
+    if (dto.specialPortionsLeft !== undefined) item.specialPortionsLeft = dto.specialPortionsLeft;
+    if (dto.caloriesKcal !== undefined) item.caloriesKcal = dto.caloriesKcal;
+    if (dto.proteinG !== undefined) item.proteinG = dto.proteinG;
+    if (dto.fatG !== undefined) item.fatG = dto.fatG;
+    if (dto.carbsG !== undefined) item.carbsG = dto.carbsG;
+    if (dto.fibreG !== undefined) item.fibreG = dto.fibreG;
     return this.items.save(item);
   }
 

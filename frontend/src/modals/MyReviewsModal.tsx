@@ -4,11 +4,7 @@ import { useKitchens } from '../store/hooks';
 import ModalHeader from '../components/ModalHeader';
 
 function cookLabel(cookId: string, kitchens: { id: string; name: string }[]) {
-  const match = kitchens.find((k) => k.id === cookId);
-  if (match) return match.name;
-  if (cookId === 'anitha') return 'Anitha Bakes';
-  if (cookId === 'meera') return 'Meera’s Kitchen';
-  return 'LOOM kitchen';
+  return kitchens.find((k) => k.id === cookId)?.name ?? 'LOOM kitchen';
 }
 
 export default function MyReviewsModal() {
@@ -18,10 +14,6 @@ export default function MyReviewsModal() {
   const navigate = useNavigate();
   const kitchens = useKitchens();
   const mine = reviews.filter((r) => r.name === 'Asha R.');
-  // The old hardcoded 'anitha' CTA target only existed in mock data — once the
-  // real backend catalog loads, it may no longer be present, leaving the
-  // button pointing at a kitchen id that ReviewModal can't find (renders
-  // nothing). Point at a real kitchen instead when one exists.
   const reviewTarget = kitchens[0];
 
   return (

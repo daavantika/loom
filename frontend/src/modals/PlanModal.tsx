@@ -2,17 +2,29 @@ import { useAppStore } from '../store/appStore';
 import { useKitchens } from '../store/hooks';
 import { currency } from '../lib/format';
 import ModalHeader from '../components/ModalHeader';
+import EmptyState from '../components/EmptyState';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 
 export default function PlanModal() {
   const planDraft = useAppStore((s) => s.planDraft);
   const kitchens = useKitchens();
+  // No mock fallback means kitchens (or a real kitchen's own dishes) can be
+  // genuinely empty — this modal used to assume both always existed.
   const cook = kitchens.find((k) => k.id === planDraft.cookId) ?? kitchens[0];
   const togglePlanDay = useAppStore((s) => s.togglePlanDay);
   const openModal = useAppStore((s) => s.openModal);
   const closeModal = useAppStore((s) => s.closeModal);
   const showToast = useAppStore((s) => s.showToast);
+
+  if (!cook || cook.dishes.length === 0) {
+    return (
+      <>
+        <ModalHeader eyebrow="Weekly tiffin plan" title="Lunch, on your rhythm." />
+        <EmptyState icon="☼" title="No kitchens available yet" body="Check back once a verified kitchen has added dishes to their menu." />
+      </>
+    );
+  }
 
   const days = planDraft.days;
   const perDay = cook.dishes[0].price;

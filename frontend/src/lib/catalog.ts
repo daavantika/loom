@@ -11,6 +11,13 @@ export function adaptMenuItemToDish(item: ApiMenuItem): Dish {
     price: item.pricePaise / 100,
     image: item.imageUrl ?? foodImages.thali,
     tags: item.tags,
+    isTodaysSpecial: item.isTodaysSpecial,
+    specialPortionsLeft: item.specialPortionsLeft,
+    caloriesKcal: item.caloriesKcal,
+    proteinG: item.proteinG,
+    fatG: item.fatG,
+    carbsG: item.carbsG,
+    fibreG: item.fibreG,
   };
 }
 

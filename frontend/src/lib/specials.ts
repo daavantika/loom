@@ -7,16 +7,20 @@ export interface Special {
   left: string;
 }
 
-/** The three featured "today's specials" dishes. Looked up by stable kitchen id
- * (not array index) so a published seller store — which is prepended to the
- * kitchens list — can never shift these onto the wrong kitchen/dish. */
+const MAX_SPECIALS = 6;
+
+/** Real "today's specials" — dishes any cook has flagged via the Menu tab
+ * (Dish.isTodaysSpecial), scanned across every real kitchen. No hardcoded
+ * kitchen ids — whichever cooks opt in show up here, or none do yet. */
 export function todaysSpecials(kitchens: Kitchen[]): Special[] {
-  const meera = kitchens.find((k) => k.id === 'meera');
-  const shafi = kitchens.find((k) => k.id === 'shafi');
-  const anitha = kitchens.find((k) => k.id === 'anitha');
   const specials: Special[] = [];
-  if (meera) specials.push({ dish: meera.dishes[0], cook: meera.name, cookId: meera.id, left: '7 portions left' });
-  if (shafi) specials.push({ dish: shafi.dishes[0], cook: shafi.name, cookId: shafi.id, left: '5 portions left' });
-  if (anitha) specials.push({ dish: anitha.dishes[1], cook: anitha.name, cookId: anitha.id, left: '4 portions left' });
+  for (const kitchen of kitchens) {
+    for (const dish of kitchen.dishes) {
+      if (!dish.isTodaysSpecial) continue;
+      const left = dish.specialPortionsLeft != null ? `${dish.specialPortionsLeft} portions left` : 'Ask about availability';
+      specials.push({ dish, cook: kitchen.name, cookId: kitchen.id, left });
+      if (specials.length >= MAX_SPECIALS) return specials;
+    }
+  }
   return specials;
 }

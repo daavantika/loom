@@ -13,6 +13,7 @@ import { OrderItem } from '../orders/order-item.entity';
 import { OrderStatusEvent } from '../orders/order-status-event.entity';
 import { Message } from '../messages/message.entity';
 import { DeliveryBooking } from '../delivery/delivery-booking.entity';
+import { Story } from '../stories/story.entity';
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ export const UserDataSource = new DataSource({
     OrderStatusEvent,
     Message,
     DeliveryBooking,
+    Story,
   ],
   migrations: [__dirname + '/../../migrations/user-db/*.{ts,js}'],
   synchronize: false,

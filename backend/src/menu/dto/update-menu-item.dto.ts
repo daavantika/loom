@@ -1,4 +1,4 @@
-import { ArrayMaxSize, IsArray, IsBoolean, IsInt, IsOptional, IsString, IsUrl, Min, MinLength } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsBoolean, IsInt, IsNumber, IsOptional, IsString, IsUrl, Min, MinLength } from 'class-validator';
 
 export class UpdateMenuItemDto {
   @IsOptional()
@@ -29,4 +29,38 @@ export class UpdateMenuItemDto {
   @IsOptional()
   @IsBoolean()
   active?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isTodaysSpecial?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  specialPortionsLeft?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  caloriesKcal?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  proteinG?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  fatG?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  carbsG?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  fibreG?: number;
 }

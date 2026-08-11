@@ -17,9 +17,9 @@ import type {
   ApiOrder,
   ApiOrderStatus,
   ApiPaymentsConfig,
+  ApiStory,
 } from '../data/api-types';
 import { findDish } from '../lib/kitchens';
-import { baseKitchens } from '../data/kitchens';
 import { loadReviews, saveReviews } from '../lib/persistence';
 import { apiFetch, ApiError } from '../lib/api';
 import { getSession, setSession, clearSession, type AuthSession } from '../lib/auth';
@@ -37,6 +37,18 @@ interface MenuItemInput {
   pricePaise: number;
   imageUrl?: string;
   tags?: string[];
+  isTodaysSpecial?: boolean;
+  specialPortionsLeft?: number;
+  caloriesKcal?: number;
+  proteinG?: number;
+  fatG?: number;
+  carbsG?: number;
+  fibreG?: number;
+}
+
+interface StoryInput {
+  title: string;
+  body: string;
 }
 
 interface AppState {
@@ -65,7 +77,7 @@ interface AppState {
   cookProfile: ApiMyCookProfile | null;
   cookProfileChecked: boolean;
 
-  // real catalog (falls back to mock baseKitchens via kitchens() until loaded)
+  // real catalog only, no mock fallback — empty until loadCatalog() resolves
   catalogKitchens: Kitchen[];
   catalogLoaded: boolean;
 
@@ -104,6 +116,14 @@ interface AppState {
   // conversation and resends it each turn
   assistantMessages: ApiAssistantMessage[];
   assistantLoading: boolean;
+
+  // stories — customer-facing public feed (verified cooks only)
+  stories: ApiStory[];
+  storiesLoading: boolean;
+
+  // stories — cook's own posts, for the cook dashboard's management view
+  myStories: ApiStory[];
+  myStoriesLoading: boolean;
 
   // derived-data helpers
   kitchens: () => Kitchen[];
@@ -168,10 +188,16 @@ interface AppState {
   // cook actions
   loadMyMenu: () => Promise<void>;
   createMenuItem: (input: MenuItemInput) => Promise<ActionResult>;
-  updateMenuItem: (id: string, input: Partial<MenuItemInput> & { active?: boolean }) => Promise<void>;
+  updateMenuItem: (id: string, input: Partial<MenuItemInput> & { active?: boolean }) => Promise<ActionResult>;
   deleteMenuItem: (id: string) => Promise<void>;
   loadCookOrders: () => Promise<void>;
   updateOrderStatus: (orderId: string, status: ApiOrderStatus, actingAsCook?: boolean) => Promise<ActionResult>;
+
+  // stories actions
+  loadStories: () => Promise<void>;
+  loadMyStories: () => Promise<void>;
+  createStory: (input: StoryInput) => Promise<ActionResult>;
+  deleteStory: (id: string) => Promise<void>;
 
   // chat actions
   loadChatThread: (cookId: string) => Promise<void>;
@@ -215,7 +241,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   adminTab: 'Needs review',
   reviews: loadReviews(),
   reviewDraft: { stars: 5, photoName: '' },
-  planDraft: { cookId: 'meera', days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'] },
+  planDraft: { cookId: '', days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'] },
   modal: null,
   toastMessage: null,
   toastNonce: 0,
@@ -245,11 +271,12 @@ export const useAppStore = create<AppState>((set, get) => ({
   cookThreadLoading: false,
   assistantMessages: [],
   assistantLoading: false,
+  stories: [],
+  storiesLoading: false,
+  myStories: [],
+  myStoriesLoading: false,
 
-  kitchens: () => {
-    const { catalogKitchens, catalogLoaded } = get();
-    return catalogLoaded && catalogKitchens.length > 0 ? catalogKitchens : baseKitchens;
-  },
+  kitchens: () => get().catalogKitchens,
   quantityOf: (dishId) => get().cart.find((item) => item.dish.id === dishId)?.quantity ?? 0,
   dishInCart: (dishId) => get().cart.some((item) => item.dish.id === dishId),
   cartTotal: () => get().cart.reduce((sum, item) => sum + item.dish.price * item.quantity, 0),
@@ -437,6 +464,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       cookThread: [],
       activeConversationCustomerId: null,
       assistantMessages: [],
+      myStories: [],
     });
   },
 
@@ -445,7 +473,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       const kitchens = await fetchCatalog();
       set({ catalogKitchens: kitchens, catalogLoaded: true });
     } catch {
-      get().showToast('Could not reach the kitchen catalog — showing sample kitchens for now');
+      get().showToast('Could not reach the kitchen catalog — try again shortly');
     }
   },
 
@@ -568,8 +596,11 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       await apiFetch(`/cooks/me/menu/${id}`, { method: 'PATCH', body: input });
       await get().loadMyMenu();
+      return { ok: true, message: 'Item updated' };
     } catch (err) {
-      get().showToast(errorMessage(err, 'Could not update this item'));
+      const message = errorMessage(err, 'Could not update this item');
+      get().showToast(message);
+      return { ok: false, message };
     }
   },
 
@@ -579,6 +610,47 @@ export const useAppStore = create<AppState>((set, get) => ({
       await get().loadMyMenu();
     } catch (err) {
       get().showToast(errorMessage(err, 'Could not remove this item'));
+    }
+  },
+
+  loadStories: async () => {
+    set({ storiesLoading: true });
+    try {
+      const stories = await apiFetch<ApiStory[]>('/stories', { auth: false });
+      set({ stories, storiesLoading: false });
+    } catch (err) {
+      set({ storiesLoading: false });
+      get().showToast(errorMessage(err, 'Could not load stories'));
+    }
+  },
+
+  loadMyStories: async () => {
+    set({ myStoriesLoading: true });
+    try {
+      const stories = await apiFetch<ApiStory[]>('/cooks/me/stories');
+      set({ myStories: stories, myStoriesLoading: false });
+    } catch (err) {
+      set({ myStoriesLoading: false });
+      get().showToast(errorMessage(err, 'Could not load your stories'));
+    }
+  },
+
+  createStory: async (input) => {
+    try {
+      await apiFetch('/cooks/me/stories', { method: 'POST', body: input });
+      await get().loadMyStories();
+      return { ok: true, message: 'Story shared' };
+    } catch (err) {
+      return { ok: false, message: errorMessage(err, 'Could not share this story') };
+    }
+  },
+
+  deleteStory: async (id) => {
+    try {
+      await apiFetch(`/cooks/me/stories/${id}`, { method: 'DELETE' });
+      await get().loadMyStories();
+    } catch (err) {
+      get().showToast(errorMessage(err, 'Could not remove this story'));
     }
   },
 

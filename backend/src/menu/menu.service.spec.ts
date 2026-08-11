@@ -61,6 +61,54 @@ describe('MenuService', () => {
 
     expect(result.active).toBe(false);
   });
+
+  it('creates a menu item with today\'s-special and nutrition fields set', async () => {
+    const repo = makeItemsRepo([]);
+    const service = new MenuService(repo as any);
+
+    const result = await service.create('cook-1', {
+      name: 'Lemon rice',
+      pricePaise: 15000,
+      isTodaysSpecial: true,
+      specialPortionsLeft: 7,
+      caloriesKcal: 320,
+      proteinG: 8.5,
+      fatG: 10,
+      carbsG: 45,
+      fibreG: 3,
+    } as any);
+
+    expect(result.isTodaysSpecial).toBe(true);
+    expect(result.specialPortionsLeft).toBe(7);
+    expect(result.caloriesKcal).toBe(320);
+    expect(result.proteinG).toBe(8.5);
+  });
+
+  it('defaults isTodaysSpecial to false when not provided', async () => {
+    const repo = makeItemsRepo([]);
+    const service = new MenuService(repo as any);
+
+    const result = await service.create('cook-1', { name: 'Dosa', pricePaise: 5000 } as any);
+
+    expect(result.isTodaysSpecial).toBe(false);
+  });
+
+  it('updates nutrition and special fields on an existing item', async () => {
+    const repo = makeItemsRepo([{ id: 'item-1', cookId: 'cook-A', name: 'Idli', active: true, isTodaysSpecial: false }]);
+    const service = new MenuService(repo as any);
+
+    const result = await service.update('cook-A', 'item-1', {
+      isTodaysSpecial: true,
+      specialPortionsLeft: 4,
+      caloriesKcal: 180,
+      proteinG: 6,
+    } as any);
+
+    expect(result.isTodaysSpecial).toBe(true);
+    expect(result.specialPortionsLeft).toBe(4);
+    expect(result.caloriesKcal).toBe(180);
+    expect(result.proteinG).toBe(6);
+  });
 });
 
 function makeOrderableItemsRepo(items: any[]) {

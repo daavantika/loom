@@ -23,6 +23,24 @@ export interface ApiMenuItem {
   imageUrl?: string;
   tags: string[];
   active: boolean;
+  isTodaysSpecial: boolean;
+  specialPortionsLeft?: number;
+  caloriesKcal?: number;
+  proteinG?: number;
+  fatG?: number;
+  carbsG?: number;
+  fibreG?: number;
+}
+
+export interface ApiStory {
+  id: string;
+  cookId: string;
+  title: string;
+  body: string;
+  createdAt: string;
+  /** Only present on the public GET /stories feed, not the cook's own GET /cooks/me/stories list. */
+  kitchenName?: string;
+  cookImage?: string;
 }
 
 export interface ApiCustomerProfile {

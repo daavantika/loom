@@ -65,15 +65,6 @@ export default function Explore() {
           <span>⌖ Nearby kitchens</span>
           <span className="map-live">Live area</span>
         </div>
-        <button className="map-pin pin-one" onClick={() => openModal({ kind: 'cook', cookId: 'meera' })} aria-label="Open Meera's Kitchen">
-          ★
-        </button>
-        <button className="map-pin pin-two" onClick={() => openModal({ kind: 'cook', cookId: 'anitha' })} aria-label="Open Anitha Bakes">
-          ★
-        </button>
-        <button className="map-pin pin-three" onClick={() => openModal({ kind: 'cook', cookId: 'shafi' })} aria-label="Open Shafi's Table">
-          ★
-        </button>
         <button className="map-address-button" onClick={() => openModal({ kind: 'location' })}>
           Set exact address
         </button>

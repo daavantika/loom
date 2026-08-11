@@ -5,6 +5,13 @@ export interface Dish {
   price: number;
   image: string;
   tags: string[];
+  isTodaysSpecial?: boolean;
+  specialPortionsLeft?: number;
+  caloriesKcal?: number;
+  proteinG?: number;
+  fatG?: number;
+  carbsG?: number;
+  fibreG?: number;
 }
 
 export interface Kitchen {

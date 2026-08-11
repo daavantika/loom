@@ -271,6 +271,8 @@ function CookMessages() {
   );
 }
 
+const NUTRITION_TAG_OPTIONS = ['High protein', 'High fibre', 'Low calorie', 'Low carb', 'High fat', 'Sugar-free'];
+
 function CookMenu() {
   const myMenuItems = useAppStore((s) => s.myMenuItems);
   const myMenuLoading = useAppStore((s) => s.myMenuLoading);
@@ -281,10 +283,19 @@ function CookMenu() {
   const showToast = useAppStore((s) => s.showToast);
 
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [priceRupees, setPriceRupees] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  const [isSpecial, setIsSpecial] = useState(false);
+  const [portionsLeft, setPortionsLeft] = useState('');
+  const [calories, setCalories] = useState('');
+  const [protein, setProtein] = useState('');
+  const [fat, setFat] = useState('');
+  const [carbs, setCarbs] = useState('');
+  const [fibre, setFibre] = useState('');
+  const [nutritionTags, setNutritionTags] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -292,11 +303,46 @@ function CookMenu() {
   }, [loadMyMenu]);
 
   const resetForm = () => {
+    setEditingId(null);
     setName('');
     setDescription('');
     setPriceRupees('');
     setImageUrl('');
+    setIsSpecial(false);
+    setPortionsLeft('');
+    setCalories('');
+    setProtein('');
+    setFat('');
+    setCarbs('');
+    setFibre('');
+    setNutritionTags(new Set());
     setShowForm(false);
+  };
+
+  const startEdit = (item: (typeof myMenuItems)[number]) => {
+    setEditingId(item.id);
+    setName(item.name);
+    setDescription(item.description ?? '');
+    setPriceRupees(String(item.pricePaise / 100));
+    setImageUrl(item.imageUrl ?? '');
+    setIsSpecial(item.isTodaysSpecial);
+    setPortionsLeft(item.specialPortionsLeft != null ? String(item.specialPortionsLeft) : '');
+    setCalories(item.caloriesKcal != null ? String(item.caloriesKcal) : '');
+    setProtein(item.proteinG != null ? String(item.proteinG) : '');
+    setFat(item.fatG != null ? String(item.fatG) : '');
+    setCarbs(item.carbsG != null ? String(item.carbsG) : '');
+    setFibre(item.fibreG != null ? String(item.fibreG) : '');
+    setNutritionTags(new Set(item.tags.filter((t) => NUTRITION_TAG_OPTIONS.includes(t))));
+    setShowForm(true);
+  };
+
+  const toggleNutritionTag = (tag: string) => {
+    setNutritionTags((prev) => {
+      const next = new Set(prev);
+      if (next.has(tag)) next.delete(tag);
+      else next.add(tag);
+      return next;
+    });
   };
 
   const submit = async () => {
@@ -305,12 +351,21 @@ function CookMenu() {
       return;
     }
     setSubmitting(true);
-    const result = await createMenuItem({
+    const payload = {
       name: name.trim(),
       description: description.trim() || undefined,
       pricePaise: Math.round(Number(priceRupees) * 100),
       imageUrl: imageUrl || undefined,
-    });
+      tags: [...nutritionTags],
+      isTodaysSpecial: isSpecial,
+      specialPortionsLeft: isSpecial && portionsLeft ? Number(portionsLeft) : undefined,
+      caloriesKcal: calories ? Number(calories) : undefined,
+      proteinG: protein ? Number(protein) : undefined,
+      fatG: fat ? Number(fat) : undefined,
+      carbsG: carbs ? Number(carbs) : undefined,
+      fibreG: fibre ? Number(fibre) : undefined,
+    };
+    const result = editingId ? await updateMenuItem(editingId, payload) : await createMenuItem(payload);
     setSubmitting(false);
     showToast(result.message);
     if (result.ok) resetForm();
@@ -320,7 +375,7 @@ function CookMenu() {
     <>
       <div className="section-head">
         <h2>Your menu</h2>
-        <button onClick={() => setShowForm((v) => !v)}>{showForm ? 'Cancel' : 'Add food item'}</button>
+        <button onClick={() => (showForm ? resetForm() : setShowForm(true))}>{showForm ? 'Cancel' : 'Add food item'}</button>
       </div>
       {showForm && (
         <div className="seller-form">
@@ -336,9 +391,60 @@ function CookMenu() {
           ) : (
             <PhotoUpload label="Add a photo" onUploaded={setImageUrl} />
           )}
+
+          <label>
+            <input type="checkbox" checked={isSpecial} onChange={(e) => setIsSpecial(e.target.checked)} /> Mark as today's special
+          </label>
+          {isSpecial && (
+            <>
+              <label htmlFor="menu-item-portions">Portions available</label>
+              <input
+                id="menu-item-portions"
+                type="number"
+                min={0}
+                value={portionsLeft}
+                onChange={(e) => setPortionsLeft(e.target.value)}
+              />
+            </>
+          )}
+
+          <label>Nutrition (optional — fill what you know)</label>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <label htmlFor="menu-item-calories" style={{ fontSize: 11 }}>
+              Calories (kcal)
+              <input id="menu-item-calories" type="number" min={0} value={calories} onChange={(e) => setCalories(e.target.value)} />
+            </label>
+            <label htmlFor="menu-item-protein" style={{ fontSize: 11 }}>
+              Protein (g)
+              <input id="menu-item-protein" type="number" min={0} value={protein} onChange={(e) => setProtein(e.target.value)} />
+            </label>
+            <label htmlFor="menu-item-fat" style={{ fontSize: 11 }}>
+              Fat (g)
+              <input id="menu-item-fat" type="number" min={0} value={fat} onChange={(e) => setFat(e.target.value)} />
+            </label>
+            <label htmlFor="menu-item-carbs" style={{ fontSize: 11 }}>
+              Carbs (g)
+              <input id="menu-item-carbs" type="number" min={0} value={carbs} onChange={(e) => setCarbs(e.target.value)} />
+            </label>
+            <label htmlFor="menu-item-fibre" style={{ fontSize: 11 }}>
+              Fibre (g)
+              <input id="menu-item-fibre" type="number" min={0} value={fibre} onChange={(e) => setFibre(e.target.value)} />
+            </label>
+          </div>
+
+          <label>Highlights (optional)</label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {NUTRITION_TAG_OPTIONS.map((tag) => (
+              <label key={tag} style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}>
+                <input type="checkbox" checked={nutritionTags.has(tag)} onChange={() => toggleNutritionTag(tag)} />
+                {tag}
+              </label>
+            ))}
+          </div>
+
           <div className="modal-actions">
             <button className="primary-button" onClick={submit} disabled={submitting}>
-              {submitting ? 'Adding…' : 'Add to menu'}
+              {submitting ? 'Saving…' : editingId ? 'Save changes' : 'Add to menu'}
             </button>
           </div>
         </div>
@@ -356,9 +462,13 @@ function CookMenu() {
                 <h3>{item.name}</h3>
                 <p>
                   {currency(item.pricePaise / 100)} · {item.active ? 'Available today' : 'Hidden from customers'}
+                  {item.isTodaysSpecial ? ' · Today\'s special' : ''}
                 </p>
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
+                <button className="outline-button" onClick={() => startEdit(item)} aria-label={`Edit ${item.name}`}>
+                  Edit
+                </button>
                 <button
                   className={item.active ? 'follow-button' : 'outline-button'}
                   onClick={() => updateMenuItem(item.id, { active: !item.active })}
@@ -444,6 +554,11 @@ function CookMore({ cookProfile }: { cookProfile: ApiMyCookProfile }) {
         <button className="settings-row" onClick={() => openModal({ kind: 'inventory' })}>
           <span>▤</span>
           <strong>Ingredient planning</strong>
+          <em>›</em>
+        </button>
+        <button className="settings-row" onClick={() => openModal({ kind: 'cookStories' })}>
+          <span>✎</span>
+          <strong>Share a story</strong>
           <em>›</em>
         </button>
         <button className="settings-row" onClick={() => navigate('/sell/register')}>

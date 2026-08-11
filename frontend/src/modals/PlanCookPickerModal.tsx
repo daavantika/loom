@@ -1,6 +1,7 @@
 import { useAppStore } from '../store/appStore';
 import { useKitchens } from '../store/hooks';
 import ModalHeader from '../components/ModalHeader';
+import EmptyState from '../components/EmptyState';
 
 export default function PlanCookPickerModal() {
   const kitchens = useKitchens();
@@ -20,20 +21,24 @@ export default function PlanCookPickerModal() {
   return (
     <>
       <ModalHeader eyebrow={summary} title="Find a cook for your plan" />
-      <div className="favourite-list">
-        {kitchens.map((k) => (
-          <button className="favourite-row" key={k.id} onClick={() => pick(k.id, k.name)}>
-            <img src={k.avatar} alt={k.cook} loading="lazy" />
-            <span>
-              <strong>{k.name}</strong>
-              <small>
-                {k.cuisine} · {k.distance}
-              </small>
-            </span>
-            <em>{k.id === planDraft.cookId ? '✓' : '›'}</em>
-          </button>
-        ))}
-      </div>
+      {kitchens.length ? (
+        <div className="favourite-list">
+          {kitchens.map((k) => (
+            <button className="favourite-row" key={k.id} onClick={() => pick(k.id, k.name)}>
+              <img src={k.avatar} alt={k.cook} loading="lazy" />
+              <span>
+                <strong>{k.name}</strong>
+                <small>
+                  {k.cuisine} · {k.distance}
+                </small>
+              </span>
+              <em>{k.id === planDraft.cookId ? '✓' : '›'}</em>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <EmptyState icon="☼" title="No kitchens available yet" body="Check back once a verified kitchen joins LOOM." />
+      )}
     </>
   );
 }

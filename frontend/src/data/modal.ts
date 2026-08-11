@@ -11,6 +11,7 @@ export type ModalState =
   | { kind: 'inventory' }
   | { kind: 'customerMessage'; name: string }
   | { kind: 'stories' }
+  | { kind: 'cookStories' }
   | { kind: 'plan' }
   | { kind: 'planCookPicker' }
   | { kind: 'todaySpecials' }

@@ -11,6 +11,7 @@ import PriceAssistantModal from '../modals/PriceAssistantModal';
 import InventoryModal from '../modals/InventoryModal';
 import CustomerMessageModal from '../modals/CustomerMessageModal';
 import StoriesModal from '../modals/StoriesModal';
+import CookStoriesModal from '../modals/CookStoriesModal';
 import PlanModal from '../modals/PlanModal';
 import PlanCookPickerModal from '../modals/PlanCookPickerModal';
 import TodaySpecialsModal from '../modals/TodaySpecialsModal';
@@ -57,6 +58,8 @@ export default function ModalLayer() {
         return <CustomerMessageModal name={modal.name} />;
       case 'stories':
         return <StoriesModal />;
+      case 'cookStories':
+        return <CookStoriesModal />;
       case 'plan':
         return <PlanModal />;
       case 'planCookPicker':

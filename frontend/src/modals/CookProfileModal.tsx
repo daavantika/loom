@@ -67,17 +67,38 @@ export default function CookProfileModal({ cookId }: { cookId: string }) {
           <h2>From the menu</h2>
           <button onClick={() => openModal({ kind: 'chat', cookId })}>Chat</button>
         </div>
-        {kitchen.dishes.map((d) => (
-          <article className="dish-row" key={d.id}>
-            <img src={d.image} alt={d.name} loading="lazy" />
-            <div>
-              <h3>{d.name}</h3>
-              <p>{d.description}</p>
-              <strong>{currency(d.price)}</strong>
-            </div>
-            <QtyControl dish={d} />
-          </article>
-        ))}
+        {kitchen.dishes.map((d) => {
+          const nutritionBits = [
+            d.caloriesKcal != null ? `${d.caloriesKcal} kcal` : null,
+            d.proteinG != null ? `${d.proteinG}g protein` : null,
+            d.fatG != null ? `${d.fatG}g fat` : null,
+            d.carbsG != null ? `${d.carbsG}g carbs` : null,
+            d.fibreG != null ? `${d.fibreG}g fibre` : null,
+          ].filter(Boolean);
+          return (
+            <article className="dish-row" key={d.id}>
+              <img src={d.image} alt={d.name} loading="lazy" />
+              <div>
+                <h3>{d.name}</h3>
+                <p>{d.description}</p>
+                {(d.tags.length > 0 || nutritionBits.length > 0) && (
+                  <p style={{ display: 'flex', flexWrap: 'wrap', gap: 4, margin: '4px 0' }}>
+                    {d.tags.map((tag) => (
+                      <span className="tag" key={tag}>
+                        {tag}
+                      </span>
+                    ))}
+                    {nutritionBits.length > 0 && (
+                      <span style={{ color: 'var(--muted)', fontSize: 10 }}>{nutritionBits.join(' · ')}</span>
+                    )}
+                  </p>
+                )}
+                <strong>{currency(d.price)}</strong>
+              </div>
+              <QtyControl dish={d} />
+            </article>
+          );
+        })}
         <div className="modal-actions">
           <button className="outline-button" onClick={() => openModal({ kind: 'chat', cookId })}>
             Ask a question
