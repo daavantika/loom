@@ -50,7 +50,7 @@ export interface PlanDraft {
 
 export type Role = 'customer' | 'cook' | 'admin';
 export type CookTab = 'Overview' | 'Orders' | 'Messages' | 'Menu' | 'Customers' | 'More';
-export type AdminTab = 'Needs review' | 'Hygiene' | 'Orders';
+export type AdminTab = 'Needs review' | 'All cooks' | 'Hygiene' | 'Orders';
 
 export interface ModerationCase {
   title: string;

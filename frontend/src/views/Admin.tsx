@@ -4,7 +4,14 @@ import { useAppStore } from '../store/appStore';
 import EmptyState from '../components/EmptyState';
 import type { AdminTab } from '../data/types';
 
-const TABS: AdminTab[] = ['Needs review', 'Hygiene', 'Orders'];
+const TABS: AdminTab[] = ['Needs review', 'All cooks', 'Hygiene', 'Orders'];
+
+const VERIFICATION_LABEL: Record<string, string> = {
+  NONE: 'Not submitted',
+  PENDING: 'Pending review',
+  VERIFIED: 'Verified',
+  REJECTED: 'Rejected',
+};
 
 function NeedsReview() {
   const cases = useAppStore((s) => s.moderationCases);
@@ -103,6 +110,50 @@ function NeedsReview() {
   );
 }
 
+function AllCooks() {
+  const cooks = useAppStore((s) => s.allCooks);
+  const loading = useAppStore((s) => s.allCooksLoading);
+  const loadAllCooks = useAppStore((s) => s.loadAllCooks);
+
+  useEffect(() => {
+    loadAllCooks();
+  }, [loadAllCooks]);
+
+  if (loading && cooks.length === 0) {
+    return <p style={{ color: 'var(--muted)', fontSize: 13 }}>Loading cooks…</p>;
+  }
+  if (cooks.length === 0) {
+    return <EmptyState icon="▣" title="No cooks yet" body="No one has started onboarding as a cook yet." />;
+  }
+
+  return (
+    <>
+      {cooks.map((c) => (
+        <article className="moderation-row" key={c.id}>
+          <div className="mod-top">
+            <h3>{c.kitchenName ?? 'Unnamed kitchen'}</h3>
+            <span className="status">{VERIFICATION_LABEL[c.verificationStatus] ?? c.verificationStatus}</span>
+          </div>
+          <p>
+            {c.ownerName ?? 'Unknown owner'} · {c.area ?? 'no area set'} · {c.status === 'DRAFT' ? 'Draft' : 'Submitted'}
+          </p>
+          {c.phone && <p style={{ fontSize: 13, color: 'var(--muted)' }}>{c.phone}</p>}
+          {c.photos.length > 0 && (
+            <div style={{ display: 'flex', gap: 8, margin: '8px 0' }}>
+              {c.photos.map((url) => (
+                <img key={url} src={url} alt={c.kitchenName} style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 8 }} />
+              ))}
+            </div>
+          )}
+          {c.rejectionReason && (
+            <p style={{ fontSize: 13, color: 'var(--muted)' }}>Rejection reason: {c.rejectionReason}</p>
+          )}
+        </article>
+      ))}
+    </>
+  );
+}
+
 export default function Admin() {
   const navigate = useNavigate();
   const auth = useAppStore((s) => s.auth);
@@ -142,6 +193,8 @@ export default function Admin() {
       <section>
         {adminTab === 'Needs review' ? (
           <NeedsReview />
+        ) : adminTab === 'All cooks' ? (
+          <AllCooks />
         ) : (
           <EmptyState
             icon="▣"

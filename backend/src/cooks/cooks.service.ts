@@ -1,11 +1,26 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { CookProfile } from './cook-profile.entity';
+import { CookProfile, CookProfileStatus } from './cook-profile.entity';
 import { KitchenPhoto } from './kitchen-photo.entity';
 import { SaveOnboardingDto } from './dto/save-onboarding.dto';
 import { VerificationService, CookVerificationStatus } from '../verification/verification.service';
 import { SubmitVerificationDto } from '../verification/dto/submit-verification.dto';
+
+export interface AdminCookProfile {
+  id: string;
+  kitchenName?: string;
+  ownerName?: string;
+  phone?: string;
+  area?: string;
+  status: CookProfileStatus;
+  minOrderValuePaise: number;
+  photos: string[];
+  createdAt: Date;
+  verified: boolean;
+  verificationStatus: CookVerificationStatus['status'];
+  rejectionReason?: string;
+}
 
 export interface PublicCookProfile {
   id: string;
@@ -157,6 +172,29 @@ export class CooksService {
     }));
     const filtered = filters.verifiedOnly ? withStatus.filter((row) => row.status.verified) : withStatus;
     return filtered.map((row) => toPublicCookProfile(row.profile, row.status));
+  }
+
+  /** Admin directory: every cook profile regardless of onboarding status, merged with live verification status — same cross-DB merge as getPublicProfile. */
+  async listAllForAdmin(): Promise<AdminCookProfile[]> {
+    const profiles = await this.profiles.find({ relations: ['photos'], order: { createdAt: 'DESC' } });
+    const statuses = await this.verification.getStatusForCooks(profiles.map((p) => p.id));
+    return profiles.map((profile) => {
+      const status = statuses.get(profile.id) ?? { verified: false, status: 'NONE' as const };
+      return {
+        id: profile.id,
+        kitchenName: profile.kitchenName,
+        ownerName: profile.ownerName,
+        phone: profile.phone,
+        area: profile.area,
+        status: profile.status,
+        minOrderValuePaise: profile.minOrderValuePaise,
+        photos: profile.photos?.map((p) => p.url) ?? [],
+        createdAt: profile.createdAt,
+        verified: status.verified,
+        verificationStatus: status.status,
+        rejectionReason: status.rejectionReason,
+      };
+    });
   }
 
   async submitVerification(userId: string, dto: SubmitVerificationDto) {

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { CartItem, CookTab, AdminTab, Review, PlanDraft, Kitchen } from '../data/types';
 import type { ModalState } from '../data/modal';
 import type {
+  ApiAdminCookProfile,
   ApiAssistantChatResponse,
   ApiAssistantMessage,
   ApiAuthResponse,
@@ -94,6 +95,10 @@ interface AppState {
   moderationCases: ApiEnrichedModerationCase[];
   moderationCasesLoading: boolean;
 
+  // admin: full cook directory
+  allCooks: ApiAdminCookProfile[];
+  allCooksLoading: boolean;
+
   // cook: own menu + own incoming orders
   myMenuItems: ApiMenuItem[];
   myMenuLoading: boolean;
@@ -184,6 +189,7 @@ interface AppState {
   loadModerationCases: () => Promise<void>;
   approveModerationCase: (caseId: string) => Promise<void>;
   rejectModerationCase: (caseId: string, reason: string) => Promise<void>;
+  loadAllCooks: () => Promise<void>;
 
   // cook actions
   loadMyMenu: () => Promise<void>;
@@ -257,6 +263,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   paymentsConfig: null,
   moderationCases: [],
   moderationCasesLoading: false,
+  allCooks: [],
+  allCooksLoading: false,
   myMenuItems: [],
   myMenuLoading: false,
   cookOrders: [],
@@ -456,6 +464,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       cookProfile: null,
       cookProfileChecked: false,
       moderationCases: [],
+      allCooks: [],
       myMenuItems: [],
       cookOrders: [],
       chatThread: [],
@@ -558,6 +567,17 @@ export const useAppStore = create<AppState>((set, get) => ({
       await get().loadModerationCases();
     } catch (err) {
       get().showToast(errorMessage(err, 'Could not approve this application'));
+    }
+  },
+
+  loadAllCooks: async () => {
+    set({ allCooksLoading: true });
+    try {
+      const cooks = await apiFetch<ApiAdminCookProfile[]>('/admin/cooks');
+      set({ allCooks: cooks, allCooksLoading: false });
+    } catch (err) {
+      set({ allCooksLoading: false });
+      get().showToast(errorMessage(err, 'Could not load the cook directory'));
     }
   },
 

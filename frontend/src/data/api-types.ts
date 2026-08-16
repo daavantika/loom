@@ -192,6 +192,22 @@ export interface ApiEnrichedModerationCase {
   } | null;
 }
 
+/** GET /admin/cooks's directory shape — every cook profile regardless of onboarding status. */
+export interface ApiAdminCookProfile {
+  id: string;
+  kitchenName?: string;
+  ownerName?: string;
+  phone?: string;
+  area?: string;
+  status: 'DRAFT' | 'PENDING_VERIFICATION';
+  minOrderValuePaise: number;
+  photos: string[];
+  createdAt: string;
+  verified: boolean;
+  verificationStatus: ApiCookVerificationStatus;
+  rejectionReason?: string;
+}
+
 export interface ApiMessage {
   id: string;
   cookId: string;

@@ -102,6 +102,14 @@ export class CooksController {
     return this.cooks.searchPublic({ area, verifiedOnly: verifiedOnly === 'true' });
   }
 
+  @Get('admin/cooks')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth()
+  listAllForAdmin() {
+    return this.cooks.listAllForAdmin();
+  }
+
   @Get('cooks/:id')
   async getPublicProfile(@Param('id') id: string) {
     const { profile, verification } = await this.cooks.getPublicProfile(id);
