@@ -5,6 +5,7 @@ import { CookProfile, CookProfileStatus } from './cook-profile.entity';
 import { KitchenPhoto } from './kitchen-photo.entity';
 import { SaveOnboardingDto } from './dto/save-onboarding.dto';
 import { VerificationService, CookVerificationStatus } from '../verification/verification.service';
+import { PayoutMethod } from '../verification/verification-record.entity';
 import { SubmitVerificationDto } from '../verification/dto/submit-verification.dto';
 
 export interface AdminCookProfile {
@@ -20,6 +21,8 @@ export interface AdminCookProfile {
   verified: boolean;
   verificationStatus: CookVerificationStatus['status'];
   rejectionReason?: string;
+  fssaiNumber?: string;
+  payoutMethod?: PayoutMethod;
 }
 
 export interface PublicCookProfile {
@@ -177,9 +180,14 @@ export class CooksService {
   /** Admin directory: every cook profile regardless of onboarding status, merged with live verification status — same cross-DB merge as getPublicProfile. */
   async listAllForAdmin(): Promise<AdminCookProfile[]> {
     const profiles = await this.profiles.find({ relations: ['photos'], order: { createdAt: 'DESC' } });
-    const statuses = await this.verification.getStatusForCooks(profiles.map((p) => p.id));
+    const cookIds = profiles.map((p) => p.id);
+    const [statuses, details] = await Promise.all([
+      this.verification.getStatusForCooks(cookIds),
+      this.verification.getDetailsForCooks(cookIds),
+    ]);
     return profiles.map((profile) => {
       const status = statuses.get(profile.id) ?? { verified: false, status: 'NONE' as const };
+      const detail = details.get(profile.id);
       return {
         id: profile.id,
         kitchenName: profile.kitchenName,
@@ -193,6 +201,8 @@ export class CooksService {
         verified: status.verified,
         verificationStatus: status.status,
         rejectionReason: status.rejectionReason,
+        fssaiNumber: detail?.fssaiNumber,
+        payoutMethod: detail?.payoutMethod,
       };
     });
   }

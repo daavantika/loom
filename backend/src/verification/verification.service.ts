@@ -2,7 +2,7 @@ import { ConflictException, ForbiddenException, Injectable, NotFoundException } 
 import { InjectRepository } from '@nestjs/typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EntityManager, In, Repository } from 'typeorm';
-import { RazorpayAccountStatus, VerificationRecord } from './verification-record.entity';
+import { PayoutMethod, RazorpayAccountStatus, VerificationRecord } from './verification-record.entity';
 import { SubmitVerificationDto } from './dto/submit-verification.dto';
 import { CryptoService } from '../common/crypto.service';
 import {
@@ -18,6 +18,12 @@ export interface CookVerificationStatus {
   status: 'NONE' | 'PENDING' | 'VERIFIED' | 'REJECTED';
   verifiedAt?: Date;
   rejectionReason?: string;
+}
+
+/** Admin-only fields (FSSAI number, payout method) — never merged into CookVerificationStatus, which backs public/customer-facing endpoints. */
+export interface CookVerificationDetails {
+  fssaiNumber?: string;
+  payoutMethod?: PayoutMethod;
 }
 
 @Injectable()
@@ -63,20 +69,33 @@ export class VerificationService {
   /** Batch form — one query for N cooks, avoiding N+1 in list endpoints (catalog search, favorites). */
   async getStatusForCooks(cookIds: string[]): Promise<Map<string, CookVerificationStatus>> {
     const result = new Map<string, CookVerificationStatus>();
-    if (cookIds.length === 0) return result;
+    const latestRows = await this.getLatestRecordsForCooks(cookIds);
+    for (const row of latestRows) {
+      result.set(row.cookId, this.toStatus(row));
+    }
+    return result;
+  }
 
-    const latestRows: VerificationRecord[] = await this.records
+  /** Admin-only batch form of FSSAI number + payout method — never merged into the public CookVerificationStatus shape. */
+  async getDetailsForCooks(cookIds: string[]): Promise<Map<string, CookVerificationDetails>> {
+    const result = new Map<string, CookVerificationDetails>();
+    const latestRows = await this.getLatestRecordsForCooks(cookIds);
+    for (const row of latestRows) {
+      result.set(row.cookId, { fssaiNumber: row.fssaiNumber, payoutMethod: row.payoutMethod });
+    }
+    return result;
+  }
+
+  /** Shared "latest verification record per cook" query backing both getStatusForCooks and getDetailsForCooks. */
+  private async getLatestRecordsForCooks(cookIds: string[]): Promise<VerificationRecord[]> {
+    if (cookIds.length === 0) return [];
+    return this.records
       .createQueryBuilder('record')
       .distinctOn(['record.cookId'])
       .where('record.cookId IN (:...cookIds)', { cookIds })
       .orderBy('record.cookId', 'ASC')
       .addOrderBy('record.createdAt', 'DESC')
       .getMany();
-
-    for (const row of latestRows) {
-      result.set(row.cookId, this.toStatus(row));
-    }
-    return result;
   }
 
   /** Used by ModerationService to enrich case listings — these ids are moderation_cases.entity_id values, i.e. specific verification_records rows, not "latest per cook". */

@@ -138,6 +138,12 @@ function AllCooks() {
             {c.ownerName ?? 'Unknown owner'} · {c.area ?? 'no area set'} · {c.status === 'DRAFT' ? 'Draft' : 'Submitted'}
           </p>
           {c.phone && <p style={{ fontSize: 13, color: 'var(--muted)' }}>{c.phone}</p>}
+          {(c.fssaiNumber || c.payoutMethod) && (
+            <p style={{ fontSize: 13, color: 'var(--muted)' }}>
+              FSSAI: {c.fssaiNumber || 'not provided'}
+              {c.payoutMethod ? ` · Payout: ${c.payoutMethod}` : ''}
+            </p>
+          )}
           {c.photos.length > 0 && (
             <div style={{ display: 'flex', gap: 8, margin: '8px 0' }}>
               {c.photos.map((url) => (

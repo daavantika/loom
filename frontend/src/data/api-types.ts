@@ -206,6 +206,8 @@ export interface ApiAdminCookProfile {
   verified: boolean;
   verificationStatus: ApiCookVerificationStatus;
   rejectionReason?: string;
+  fssaiNumber?: string;
+  payoutMethod?: 'UPI' | 'BANK';
 }
 
 export interface ApiMessage {
