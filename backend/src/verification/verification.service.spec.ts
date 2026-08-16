@@ -13,6 +13,12 @@ describe('VerificationService', () => {
     save: jest.Mock;
     update: jest.Mock;
   };
+  let suspensionsRepo: {
+    find: jest.Mock;
+    create: jest.Mock;
+    save: jest.Mock;
+    delete: jest.Mock;
+  };
   let crypto: CryptoService;
   let events: EventEmitter2;
 
@@ -23,9 +29,15 @@ describe('VerificationService', () => {
       save: jest.fn(async (entity) => entity),
       update: jest.fn(async () => undefined),
     };
+    suspensionsRepo = {
+      find: jest.fn(async () => []),
+      create: jest.fn((input) => ({ suspendedAt: new Date(), ...input })),
+      save: jest.fn(async (entity) => entity),
+      delete: jest.fn(async () => undefined),
+    };
     crypto = { encrypt: jest.fn(() => Buffer.from('cipher')) } as unknown as CryptoService;
     events = { emit: jest.fn() } as unknown as EventEmitter2;
-    service = new VerificationService(repo as any, crypto, events);
+    service = new VerificationService(repo as any, suspensionsRepo as any, crypto, events);
   });
 
   const dto = { payoutMethod: 'UPI' as const, payoutDetails: 'cook@upi' };
@@ -88,6 +100,55 @@ describe('VerificationService', () => {
   });
 });
 
+describe('VerificationService.suspendCook / reinstateCook / getSuspensionsForCooks', () => {
+  let service: VerificationService;
+  let suspensionsRepo: { find: jest.Mock; create: jest.Mock; save: jest.Mock; delete: jest.Mock };
+
+  beforeEach(() => {
+    suspensionsRepo = {
+      find: jest.fn(async () => []),
+      create: jest.fn((input) => ({ suspendedAt: new Date('2026-01-01T00:00:00Z'), ...input })),
+      save: jest.fn(async (entity) => entity),
+      delete: jest.fn(async () => undefined),
+    };
+    service = new VerificationService(
+      {} as any,
+      suspensionsRepo as any,
+      {} as CryptoService,
+      { emit: jest.fn() } as unknown as EventEmitter2,
+    );
+  });
+
+  it('suspendCook creates a cook_suspensions row with the admin id and reason', async () => {
+    await service.suspendCook('cook-1', 'admin-1', 'hygiene complaint');
+
+    expect(suspensionsRepo.create).toHaveBeenCalledWith({ cookId: 'cook-1', suspendedBy: 'admin-1', reason: 'hygiene complaint' });
+    expect(suspensionsRepo.save).toHaveBeenCalled();
+  });
+
+  it('reinstateCook deletes the cook_suspensions row', async () => {
+    await service.reinstateCook('cook-1');
+    expect(suspensionsRepo.delete).toHaveBeenCalledWith({ cookId: 'cook-1' });
+  });
+
+  it('getSuspensionsForCooks returns a map keyed by cookId for existing rows only', async () => {
+    suspensionsRepo.find.mockResolvedValue([
+      { cookId: 'cook-1', reason: 'spam', suspendedAt: new Date('2026-01-02T00:00:00Z') },
+    ]);
+
+    const result = await service.getSuspensionsForCooks(['cook-1', 'cook-2']);
+
+    expect(result.get('cook-1')).toEqual({ reason: 'spam', suspendedAt: new Date('2026-01-02T00:00:00Z') });
+    expect(result.has('cook-2')).toBe(false);
+  });
+
+  it('getSuspensionsForCooks short-circuits on an empty id list without querying', async () => {
+    const result = await service.getSuspensionsForCooks([]);
+    expect(result.size).toBe(0);
+    expect(suspensionsRepo.find).not.toHaveBeenCalled();
+  });
+});
+
 function makeQueryBuilderRepo(rows: Partial<VerificationRecord>[]) {
   const qb = {
     distinctOn: jest.fn().mockReturnThis(),
@@ -103,7 +164,7 @@ describe('VerificationService.getStatusForCook / getStatusForCooks', () => {
   const makeService = (rows: Partial<VerificationRecord>[]) => {
     const { createQueryBuilder } = makeQueryBuilderRepo(rows);
     const repo = { createQueryBuilder };
-    return new VerificationService(repo as any, {} as CryptoService, { emit: jest.fn() } as unknown as EventEmitter2);
+    return new VerificationService(repo as any, {} as any, {} as CryptoService, { emit: jest.fn() } as unknown as EventEmitter2);
   };
 
   it('reports NONE when the cook has never submitted', async () => {
@@ -147,6 +208,7 @@ describe('VerificationService.getStatusForCook / getStatusForCooks', () => {
     const { createQueryBuilder } = makeQueryBuilderRepo([]);
     const service = new VerificationService(
       { createQueryBuilder } as any,
+      {} as any,
       {} as CryptoService,
       { emit: jest.fn() } as unknown as EventEmitter2,
     );
@@ -161,7 +223,7 @@ describe('VerificationService.getStatusForCook / getStatusForCooks', () => {
 describe('VerificationService.getRazorpayAccountForCook', () => {
   const makeService = (latest: Partial<VerificationRecord> | null) => {
     const findOne = jest.fn(async () => latest);
-    return new VerificationService({ findOne } as any, {} as CryptoService, { emit: jest.fn() } as unknown as EventEmitter2);
+    return new VerificationService({ findOne } as any, {} as any, {} as CryptoService, { emit: jest.fn() } as unknown as EventEmitter2);
   };
 
   it('returns null when the cook has never submitted', async () => {
@@ -186,7 +248,7 @@ describe('VerificationService.getRazorpayAccountForCook', () => {
 describe('VerificationService.attachRazorpayAccount', () => {
   it('writes the account id and status via a plain update, not a transaction', async () => {
     const update = jest.fn(async () => undefined);
-    const service = new VerificationService({ update } as any, {} as CryptoService, { emit: jest.fn() } as unknown as EventEmitter2);
+    const service = new VerificationService({ update } as any, {} as any, {} as CryptoService, { emit: jest.fn() } as unknown as EventEmitter2);
 
     await service.attachRazorpayAccount('record-1', 'acc_cook1', 'CREATED');
 
@@ -195,7 +257,7 @@ describe('VerificationService.attachRazorpayAccount', () => {
 
   it('records a FAILED status with no account id', async () => {
     const update = jest.fn(async () => undefined);
-    const service = new VerificationService({ update } as any, {} as CryptoService, { emit: jest.fn() } as unknown as EventEmitter2);
+    const service = new VerificationService({ update } as any, {} as any, {} as CryptoService, { emit: jest.fn() } as unknown as EventEmitter2);
 
     await service.attachRazorpayAccount('record-1', null, 'FAILED');
 
@@ -206,7 +268,7 @@ describe('VerificationService.attachRazorpayAccount', () => {
 describe('VerificationService.findByIds', () => {
   it('returns an empty array without querying when given no ids', async () => {
     const find = jest.fn();
-    const service = new VerificationService({ find } as any, {} as CryptoService, { emit: jest.fn() } as unknown as EventEmitter2);
+    const service = new VerificationService({ find } as any, {} as any, {} as CryptoService, { emit: jest.fn() } as unknown as EventEmitter2);
 
     const result = await service.findByIds([]);
 
@@ -217,7 +279,7 @@ describe('VerificationService.findByIds', () => {
   it('looks up specific records by id (not "latest per cook")', async () => {
     const rows = [{ id: 'record-1' }, { id: 'record-2' }];
     const find = jest.fn(async () => rows);
-    const service = new VerificationService({ find } as any, {} as CryptoService, { emit: jest.fn() } as unknown as EventEmitter2);
+    const service = new VerificationService({ find } as any, {} as any, {} as CryptoService, { emit: jest.fn() } as unknown as EventEmitter2);
 
     const result = await service.findByIds(['record-1', 'record-2']);
 

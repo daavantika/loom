@@ -208,6 +208,8 @@ export interface ApiAdminCookProfile {
   rejectionReason?: string;
   fssaiNumber?: string;
   payoutMethod?: 'UPI' | 'BANK';
+  suspended: boolean;
+  suspensionReason?: string;
 }
 
 export interface ApiMessage {

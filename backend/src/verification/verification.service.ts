@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EntityManager, In, Repository } from 'typeorm';
 import { PayoutMethod, RazorpayAccountStatus, VerificationRecord } from './verification-record.entity';
+import { CookSuspension } from './cook-suspension.entity';
 import { SubmitVerificationDto } from './dto/submit-verification.dto';
 import { CryptoService } from '../common/crypto.service';
 import {
@@ -26,13 +27,44 @@ export interface CookVerificationDetails {
   payoutMethod?: PayoutMethod;
 }
 
+export interface CookSuspensionInfo {
+  reason?: string;
+  suspendedAt: Date;
+}
+
 @Injectable()
 export class VerificationService {
   constructor(
     @InjectRepository(VerificationRecord, 'adminDb') private readonly records: Repository<VerificationRecord>,
+    @InjectRepository(CookSuspension, 'adminDb') private readonly suspensions: Repository<CookSuspension>,
     private readonly crypto: CryptoService,
     private readonly events: EventEmitter2,
   ) {}
+
+  /** A cook is suspended iff a cook_suspensions row exists for them — reinstate() deletes it. */
+  async suspendCook(cookId: string, adminId: string, reason?: string): Promise<void> {
+    await this.suspensions.save(this.suspensions.create({ cookId, suspendedBy: adminId, reason }));
+  }
+
+  async reinstateCook(cookId: string): Promise<void> {
+    await this.suspensions.delete({ cookId });
+  }
+
+  async isSuspended(cookId: string): Promise<boolean> {
+    const suspensions = await this.getSuspensionsForCooks([cookId]);
+    return suspensions.has(cookId);
+  }
+
+  /** Batch form — one query for N cooks, avoiding N+1 in list/search endpoints. */
+  async getSuspensionsForCooks(cookIds: string[]): Promise<Map<string, CookSuspensionInfo>> {
+    const result = new Map<string, CookSuspensionInfo>();
+    if (cookIds.length === 0) return result;
+    const rows = await this.suspensions.find({ where: { cookId: In(cookIds) } });
+    for (const row of rows) {
+      result.set(row.cookId, { reason: row.reason, suspendedAt: row.suspendedAt });
+    }
+    return result;
+  }
 
   async findActiveForCook(cookId: string): Promise<VerificationRecord | null> {
     return this.records.findOne({ where: { cookId, status: 'SUBMITTED' } }) ??

@@ -190,6 +190,8 @@ interface AppState {
   approveModerationCase: (caseId: string) => Promise<void>;
   rejectModerationCase: (caseId: string, reason: string) => Promise<void>;
   loadAllCooks: () => Promise<void>;
+  suspendCook: (cookId: string, reason: string) => Promise<void>;
+  reinstateCook: (cookId: string) => Promise<void>;
 
   // cook actions
   loadMyMenu: () => Promise<void>;
@@ -578,6 +580,26 @@ export const useAppStore = create<AppState>((set, get) => ({
     } catch (err) {
       set({ allCooksLoading: false });
       get().showToast(errorMessage(err, 'Could not load the cook directory'));
+    }
+  },
+
+  suspendCook: async (cookId, reason) => {
+    try {
+      await apiFetch(`/admin/cooks/${cookId}/suspend`, { method: 'POST', body: { reason } });
+      get().showToast('Kitchen suspended');
+      await get().loadAllCooks();
+    } catch (err) {
+      get().showToast(errorMessage(err, 'Could not suspend this kitchen'));
+    }
+  },
+
+  reinstateCook: async (cookId) => {
+    try {
+      await apiFetch(`/admin/cooks/${cookId}/reinstate`, { method: 'POST' });
+      get().showToast('Kitchen reinstated');
+      await get().loadAllCooks();
+    } catch (err) {
+      get().showToast(errorMessage(err, 'Could not reinstate this kitchen'));
     }
   },
 

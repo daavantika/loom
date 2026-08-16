@@ -171,3 +171,34 @@ describe('CooksService.getOwnerContact', () => {
     await expect(service.getOwnerContact('nonexistent')).rejects.toThrow(NotFoundException);
   });
 });
+
+describe('CooksService.suspendCook / reinstateCook', () => {
+  it('suspends an existing cook via VerificationService, scoped to the admin DB', async () => {
+    const profile = { id: 'cook-1' };
+    const profiles = makeProfileRepo(profile);
+    const verification = { suspendCook: jest.fn(async () => undefined) } as unknown as VerificationService;
+    const service = new CooksService(profiles as any, {} as any, verification);
+
+    await service.suspendCook('cook-1', 'admin-1', 'hygiene complaint');
+
+    expect(verification.suspendCook).toHaveBeenCalledWith('cook-1', 'admin-1', 'hygiene complaint');
+  });
+
+  it('404s suspending a cook that does not exist, without touching the admin DB', async () => {
+    const profiles = makeProfileRepo(null);
+    const verification = { suspendCook: jest.fn() } as unknown as VerificationService;
+    const service = new CooksService(profiles as any, {} as any, verification);
+
+    await expect(service.suspendCook('nonexistent', 'admin-1', 'reason')).rejects.toThrow(NotFoundException);
+    expect(verification.suspendCook).not.toHaveBeenCalled();
+  });
+
+  it('reinstateCook delegates straight to VerificationService', async () => {
+    const verification = { reinstateCook: jest.fn(async () => undefined) } as unknown as VerificationService;
+    const service = new CooksService({} as any, {} as any, verification);
+
+    await service.reinstateCook('cook-1');
+
+    expect(verification.reinstateCook).toHaveBeenCalledWith('cook-1');
+  });
+});

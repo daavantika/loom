@@ -114,10 +114,31 @@ function AllCooks() {
   const cooks = useAppStore((s) => s.allCooks);
   const loading = useAppStore((s) => s.allCooksLoading);
   const loadAllCooks = useAppStore((s) => s.loadAllCooks);
+  const suspendCook = useAppStore((s) => s.suspendCook);
+  const reinstateCook = useAppStore((s) => s.reinstateCook);
+
+  const [suspendingId, setSuspendingId] = useState<string | null>(null);
+  const [reason, setReason] = useState('');
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   useEffect(() => {
     loadAllCooks();
   }, [loadAllCooks]);
+
+  const confirmSuspend = async (cookId: string) => {
+    if (!reason.trim()) return;
+    setBusyId(cookId);
+    await suspendCook(cookId, reason.trim());
+    setBusyId(null);
+    setSuspendingId(null);
+    setReason('');
+  };
+
+  const reinstate = async (cookId: string) => {
+    setBusyId(cookId);
+    await reinstateCook(cookId);
+    setBusyId(null);
+  };
 
   if (loading && cooks.length === 0) {
     return <p style={{ color: 'var(--muted)', fontSize: 13 }}>Loading cooks…</p>;
@@ -132,7 +153,9 @@ function AllCooks() {
         <article className="moderation-row" key={c.id}>
           <div className="mod-top">
             <h3>{c.kitchenName ?? 'Unnamed kitchen'}</h3>
-            <span className="status">{VERIFICATION_LABEL[c.verificationStatus] ?? c.verificationStatus}</span>
+            <span className="status">
+              {c.suspended ? 'Suspended' : VERIFICATION_LABEL[c.verificationStatus] ?? c.verificationStatus}
+            </span>
           </div>
           <p>
             {c.ownerName ?? 'Unknown owner'} · {c.area ?? 'no area set'} · {c.status === 'DRAFT' ? 'Draft' : 'Submitted'}
@@ -153,6 +176,40 @@ function AllCooks() {
           )}
           {c.rejectionReason && (
             <p style={{ fontSize: 13, color: 'var(--muted)' }}>Rejection reason: {c.rejectionReason}</p>
+          )}
+          {c.suspended && (
+            <p style={{ fontSize: 13, color: 'var(--muted)' }}>Suspended: {c.suspensionReason || 'no reason given'}</p>
+          )}
+          {suspendingId === c.id ? (
+            <div className="filter-block">
+              <input
+                className="address-input"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="Reason for suspending this kitchen"
+                autoFocus
+              />
+              <footer style={{ marginTop: 8 }}>
+                <button onClick={() => confirmSuspend(c.id)} disabled={busyId === c.id || !reason.trim()}>
+                  Confirm suspend
+                </button>
+                <button className="outline-button" onClick={() => setSuspendingId(null)}>
+                  Cancel
+                </button>
+              </footer>
+            </div>
+          ) : (
+            <footer>
+              {c.suspended ? (
+                <button onClick={() => reinstate(c.id)} disabled={busyId === c.id}>
+                  Reinstate
+                </button>
+              ) : (
+                <button className="review" onClick={() => setSuspendingId(c.id)} disabled={busyId === c.id}>
+                  Suspend kitchen
+                </button>
+              )}
+            </footer>
           )}
         </article>
       ))}

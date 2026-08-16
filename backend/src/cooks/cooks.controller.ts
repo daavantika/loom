@@ -5,6 +5,7 @@ import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { CooksService, toPublicCookProfile } from './cooks.service';
 import { SaveOnboardingDto } from './dto/save-onboarding.dto';
+import { SuspendCookDto } from './dto/suspend-cook.dto';
 import { SubmitVerificationDto } from '../verification/dto/submit-verification.dto';
 import { MenuService } from '../menu/menu.service';
 import { SaveMenuItemDto } from '../menu/dto/save-menu-item.dto';
@@ -108,6 +109,22 @@ export class CooksController {
   @ApiBearerAuth()
   listAllForAdmin() {
     return this.cooks.listAllForAdmin();
+  }
+
+  @Post('admin/cooks/:id/suspend')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth()
+  async suspendCook(@Param('id') id: string, @Body() dto: SuspendCookDto, @Req() req: AuthedRequest) {
+    await this.cooks.suspendCook(id, req.user.userId, dto.reason);
+  }
+
+  @Post('admin/cooks/:id/reinstate')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth()
+  async reinstateCook(@Param('id') id: string) {
+    await this.cooks.reinstateCook(id);
   }
 
   @Get('cooks/:id')

@@ -23,6 +23,8 @@ export interface AdminCookProfile {
   rejectionReason?: string;
   fssaiNumber?: string;
   payoutMethod?: PayoutMethod;
+  suspended: boolean;
+  suspensionReason?: string;
 }
 
 export interface PublicCookProfile {
@@ -158,7 +160,7 @@ export class CooksService {
     );
   }
 
-  /** Public catalog search: cooks that have submitted onboarding (PENDING_VERIFICATION), optionally filtered by area and/or verified-only. */
+  /** Public catalog search: cooks that have submitted onboarding (PENDING_VERIFICATION), optionally filtered by area and/or verified-only. Suspended cooks never appear. */
   async searchPublic(filters: { area?: string; verifiedOnly?: boolean }): Promise<PublicCookProfile[]> {
     const profiles = await this.profiles.find({
       where: {
@@ -167,12 +169,18 @@ export class CooksService {
       },
       relations: ['photos'],
     });
-    const statuses = await this.verification.getStatusForCooks(profiles.map((p) => p.id));
+    const cookIds = profiles.map((p) => p.id);
+    const [statuses, suspensions] = await Promise.all([
+      this.verification.getStatusForCooks(cookIds),
+      this.verification.getSuspensionsForCooks(cookIds),
+    ]);
 
-    const withStatus = profiles.map((profile) => ({
-      profile,
-      status: statuses.get(profile.id) ?? { verified: false, status: 'NONE' as const },
-    }));
+    const withStatus = profiles
+      .filter((profile) => !suspensions.has(profile.id))
+      .map((profile) => ({
+        profile,
+        status: statuses.get(profile.id) ?? { verified: false, status: 'NONE' as const },
+      }));
     const filtered = filters.verifiedOnly ? withStatus.filter((row) => row.status.verified) : withStatus;
     return filtered.map((row) => toPublicCookProfile(row.profile, row.status));
   }
@@ -181,13 +189,15 @@ export class CooksService {
   async listAllForAdmin(): Promise<AdminCookProfile[]> {
     const profiles = await this.profiles.find({ relations: ['photos'], order: { createdAt: 'DESC' } });
     const cookIds = profiles.map((p) => p.id);
-    const [statuses, details] = await Promise.all([
+    const [statuses, details, suspensions] = await Promise.all([
       this.verification.getStatusForCooks(cookIds),
       this.verification.getDetailsForCooks(cookIds),
+      this.verification.getSuspensionsForCooks(cookIds),
     ]);
     return profiles.map((profile) => {
       const status = statuses.get(profile.id) ?? { verified: false, status: 'NONE' as const };
       const detail = details.get(profile.id);
+      const suspension = suspensions.get(profile.id);
       return {
         id: profile.id,
         kitchenName: profile.kitchenName,
@@ -203,8 +213,22 @@ export class CooksService {
         rejectionReason: status.rejectionReason,
         fssaiNumber: detail?.fssaiNumber,
         payoutMethod: detail?.payoutMethod,
+        suspended: !!suspension,
+        suspensionReason: suspension?.reason,
       };
     });
+  }
+
+  /** Admin action: hide a cook from the public catalog without touching their orders/menu/messages. Idempotent — re-suspending updates the reason. */
+  async suspendCook(cookProfileId: string, adminId: string, reason?: string): Promise<void> {
+    const profile = await this.profiles.findOne({ where: { id: cookProfileId } });
+    if (!profile) throw new NotFoundException('Cook profile not found');
+    await this.verification.suspendCook(cookProfileId, adminId, reason);
+  }
+
+  /** Admin action: reverses suspendCook — the cook reappears in the public catalog. */
+  async reinstateCook(cookProfileId: string): Promise<void> {
+    await this.verification.reinstateCook(cookProfileId);
   }
 
   async submitVerification(userId: string, dto: SubmitVerificationDto) {
